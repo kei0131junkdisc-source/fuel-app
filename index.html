@@ -19,16 +19,17 @@
        色やサイズを一か所で管理し、変更を簡単に
     ============================================= */
     :root {
-      --bg:          #0d0f14;       /* 最も暗い背景 */
-      --surface:     #161b24;       /* カード背景 */
-      --surface2:    #1e2535;       /* 入力欄・履歴行 */
-      --border:      #2a3347;       /* ボーダー */
-      --accent:      #3ddc84;       /* アクセント緑 */
-      --accent-dim:  #2a9960;       /* 薄いアクセント */
-      --accent-glow: rgba(61,220,132,0.18); /* 光彩 */
-      --text:        #e8edf5;       /* メインテキスト */
-      --text-sub:    #7a8ba0;       /* サブテキスト */
-      --danger:      #ff5a6a;       /* 削除ボタン */
+      --bg:          #0d0f14;
+      --surface:     #161b24;
+      --surface2:    #1e2535;
+      --border:      #2a3347;
+      --accent:      #3ddc84;
+      --accent-dim:  #2a9960;
+      --accent-glow: rgba(61,220,132,0.18);
+      --text:        #e8edf5;
+      --text-sub:    #7a8ba0;
+      --danger:      #ff5a6a;
+      --danger-bg:   rgba(255,90,106,0.12);
       --radius:      14px;
       --radius-sm:   8px;
       --font-body:   'Noto Sans JP', sans-serif;
@@ -51,7 +52,7 @@
       font-size: 15px;
       line-height: 1.6;
       min-height: 100svh;
-      /* 微細なグリッドテクスチャで奥行きを演出 */
+      /* 微細なグリッドテクスチャ */
       background-image:
         linear-gradient(rgba(61,220,132,0.03) 1px, transparent 1px),
         linear-gradient(90deg, rgba(61,220,132,0.03) 1px, transparent 1px);
@@ -102,7 +103,7 @@
     }
 
     /* =============================================
-       平均燃費バナー（一番目立つ部分）
+       平均燃費バナー
     ============================================= */
     .avg-card {
       background: linear-gradient(135deg, #1a2d1e 0%, var(--surface) 100%);
@@ -131,7 +132,6 @@
       font-family: var(--font-mono);
       color: var(--accent);
       line-height: 1;
-      /* 数字が変わるときにアニメーション */
       transition: transform 0.3s ease;
     }
 
@@ -157,18 +157,20 @@
     }
 
     /* =============================================
-       入力フォームカード
+       【新機能】燃費推移グラフカード
     ============================================= */
-    .form-card {
+    .graph-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 20px;
       margin-bottom: 20px;
-      animation: fadeUp 0.5s ease 0.2s both;
+      animation: fadeUp 0.5s ease 0.15s both;
+      overflow: hidden;
     }
 
-    .form-card h2 {
+    /* セクションタイトル共通スタイル */
+    .section-title {
       font-size: 13px;
       font-weight: 500;
       color: var(--text-sub);
@@ -181,16 +183,49 @@
       gap: 8px;
     }
 
-    .form-card h2::before {
+    .section-title::before {
       content: '';
       display: block;
       width: 4px;
       height: 13px;
       background: var(--accent);
       border-radius: 2px;
+      flex-shrink: 0;
     }
 
-    /* フォームグリッド: 2列レイアウト */
+    /* グラフSVGのコンテナ（データが多い時は横スクロール） */
+    .graph-wrap {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #fuelChart {
+      display: block;
+      min-width: 100%;
+    }
+
+    /* グラフの空表示 */
+    .graph-empty {
+      text-align: center;
+      padding: 24px 0;
+      color: var(--text-sub);
+      font-size: 13px;
+      font-family: var(--font-mono);
+    }
+
+    /* =============================================
+       入力フォームカード
+    ============================================= */
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      animation: fadeUp 0.5s ease 0.2s both;
+    }
+
     .form-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -198,12 +233,10 @@
       margin-bottom: 12px;
     }
 
-    /* 給油日は1列全幅 */
     .form-grid .full {
       grid-column: 1 / -1;
     }
 
-    /* ラベルとインプットのセット */
     .field label {
       display: block;
       font-size: 11px;
@@ -224,7 +257,6 @@
       font-family: var(--font-body);
       padding: 10px 12px;
       outline: none;
-      /* フォーカス時にアクセントカラーのボーダー */
       transition: border-color 0.2s, box-shadow 0.2s;
       -webkit-appearance: none;
     }
@@ -234,13 +266,12 @@
       box-shadow: 0 0 0 3px var(--accent-glow);
     }
 
-    /* date インプットのカラーピッカー部分を合わせる */
     .field input[type="date"]::-webkit-calendar-picker-indicator {
       filter: invert(0.6);
       cursor: pointer;
     }
 
-    /* 燃費プレビュー（入力中にリアルタイム表示） */
+    /* 燃費プレビュー */
     .preview {
       background: var(--surface2);
       border: 1px dashed var(--border);
@@ -265,7 +296,7 @@
     .btn-add {
       width: 100%;
       background: var(--accent);
-      color: #0a1a0e;  /* 濃い緑で視認性を確保 */
+      color: #0a1a0e;
       border: none;
       border-radius: var(--radius-sm);
       font-size: 15px;
@@ -275,7 +306,6 @@
       cursor: pointer;
       letter-spacing: 0.05em;
       transition: opacity 0.2s, transform 0.1s;
-      /* タップ時のフィードバック */
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -328,7 +358,6 @@
       border-radius: 999px;
     }
 
-    /* 履歴が空のとき */
     .empty {
       text-align: center;
       padding: 40px 20px;
@@ -346,14 +375,12 @@
       opacity: 0.5;
     }
 
-    /* 履歴リスト */
     .history-list {
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
 
-    /* 履歴アイテム */
     .history-item {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -362,16 +389,10 @@
       display: flex;
       align-items: center;
       gap: 14px;
-      /* 追加アニメーション */
       animation: fadeLeft 0.35s ease;
       transition: border-color 0.2s;
     }
 
-    .history-item:hover {
-      border-color: var(--border);
-    }
-
-    /* 燃費の数値（円形バッジ） */
     .item-badge {
       flex-shrink: 0;
       width: 52px;
@@ -399,7 +420,6 @@
       color: var(--text-sub);
     }
 
-    /* 詳細テキスト */
     .item-info {
       flex: 1;
       min-width: 0;
@@ -446,10 +466,136 @@
     }
 
     .btn-del:active {
-      background: rgba(255,90,106,0.15);
+      background: var(--danger-bg);
       border-color: var(--danger);
       color: var(--danger);
     }
+
+    /* =============================================
+       【新機能】削除確認ダイアログ
+    ============================================= */
+
+    /* 背景オーバーレイ（画面全体を覆う暗幕） */
+    .dialog-overlay {
+      position: fixed;
+      inset: 0;                  /* top/right/bottom/left をすべて0にする */
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;      /* 非表示中はクリックを無効化 */
+      transition: opacity 0.2s ease;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    /* .show クラスが付いたら表示 */
+    .dialog-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* ダイアログ本体 */
+    .dialog {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--danger); /* 危険な操作を赤いラインで示す */
+      border-radius: var(--radius);
+      padding: 28px 24px 20px;
+      width: 100%;
+      max-width: 320px;
+      transform: scale(0.92) translateY(10px);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .dialog-overlay.show .dialog {
+      transform: scale(1) translateY(0);
+    }
+
+    .dialog-icon {
+      font-size: 32px;
+      display: block;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .dialog-title {
+      font-size: 17px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .dialog-msg {
+      font-size: 13px;
+      color: var(--text-sub);
+      text-align: center;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    /* 削除対象レコードの情報ボックス */
+    .dialog-target {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-sub);
+      text-align: center;
+      margin-bottom: 20px;
+      line-height: 1.8;
+    }
+
+    .dialog-target strong {
+      color: var(--text);
+    }
+
+    /* ボタン2列グリッド */
+    .dialog-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* キャンセルボタン */
+    .btn-cancel {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 700;
+      font-family: var(--font-body);
+      padding: 12px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-cancel:active { opacity: 0.7; }
+
+    /* 削除実行ボタン */
+    .btn-confirm-del {
+      background: var(--danger);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 700;
+      font-family: var(--font-body);
+      padding: 12px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-confirm-del:active { opacity: 0.8; }
 
     /* =============================================
        アニメーション
@@ -469,17 +615,23 @@
       to   { opacity: 1; transform: translateX(0); }
     }
 
-    /* 削除アニメーション */
     .removing {
       animation: slideOut 0.3s ease forwards;
     }
 
     @keyframes slideOut {
-      to { opacity: 0; transform: translateX(-20px); max-height: 0; margin: 0; padding: 0; overflow: hidden; }
+      to {
+        opacity: 0;
+        transform: translateX(-20px);
+        max-height: 0;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
     }
 
     /* =============================================
-       トースト通知（登録完了メッセージ）
+       トースト通知
     ============================================= */
     .toast {
       position: fixed;
@@ -507,10 +659,6 @@
 </head>
 <body>
 
-<!-- =============================================
-     HTMLの構造
-     .app → header / avg-card / form-card / history-section
-============================================= -->
 <div class="app">
 
   <!-- ── ヘッダー ── -->
@@ -521,33 +669,42 @@
   </header>
 
   <!-- ── 平均燃費バナー ── -->
-  <div class="avg-card" id="avgCard">
+  <div class="avg-card">
     <div>
       <div class="avg-label">平均燃費</div>
       <div class="avg-value" id="avgValue">--</div>
       <div class="avg-unit">km / L</div>
     </div>
-    <div class="avg-stats" id="avgStats">
+    <div class="avg-stats">
       <div class="avg-stat-item">給油回数: <strong id="totalCount">0</strong> 回</div>
       <div class="avg-stat-item">総走行距離: <strong id="totalKm">0</strong> km</div>
       <div class="avg-stat-item">総給油量: <strong id="totalLiter">0.0</strong> L</div>
     </div>
   </div>
 
+  <!-- ── 【新機能】燃費推移グラフ ── -->
+  <div class="graph-card">
+    <div class="section-title">燃費推移グラフ</div>
+    <!--
+      グラフはJavaScriptでSVGを動的に生成してここに挿入する。
+      外部ライブラリは使わず、SVGタグを直接組み立てる方式。
+    -->
+    <div class="graph-wrap" id="graphWrap">
+      <div class="graph-empty" id="graphEmpty">📊 記録が2件以上あるとグラフが表示されます</div>
+    </div>
+  </div>
+
   <!-- ── 入力フォーム ── -->
   <div class="form-card">
-    <h2>給油を記録</h2>
+    <div class="section-title">給油を記録</div>
 
     <div class="form-grid">
-      <!-- 給油日 (full幅) -->
       <div class="field full">
         <label for="inputDate">📅 給油日</label>
         <input type="date" id="inputDate" />
       </div>
-
-      <!-- 走行距離 -->
       <div class="field">
-        <label for="inputKm">🛣 走行距離</label>
+        <label for="inputKm">🛣 走行距離 (km)</label>
         <input
           type="number"
           id="inputKm"
@@ -557,8 +714,6 @@
           inputmode="decimal"
         />
       </div>
-
-      <!-- 給油量 -->
       <div class="field">
         <label for="inputLiter">🪣 給油量 (L)</label>
         <input
@@ -572,14 +727,13 @@
       </div>
     </div>
 
-    <!-- 燃費プレビュー（入力中にリアルタイム更新） -->
+    <!-- 入力中リアルタイムで燃費を表示 -->
     <div class="preview">
       <span>このときの燃費</span>
       <span class="preview-value" id="previewValue">-- km/L</span>
     </div>
 
-    <!-- 登録ボタン -->
-    <button class="btn-add" id="btnAdd" onclick="addRecord()">＋ 記録する</button>
+    <button class="btn-add" onclick="addRecord()">＋ 記録する</button>
   </div>
 
   <!-- ── 給油履歴 ── -->
@@ -588,66 +742,86 @@
       <h2>給油履歴</h2>
       <span class="count-badge" id="countBadge">0 件</span>
     </div>
-    <!-- 履歴アイテムをJavaScriptで動的に追加する場所 -->
+    <!-- JSで動的に生成して挿入する -->
     <div id="historyList"></div>
   </div>
 
+</div><!-- /.app -->
+
+<!-- =============================================
+     【新機能】削除確認ダイアログ
+     .dialog-overlay に .show を付け外しして表示を制御する
+============================================= -->
+<div class="dialog-overlay" id="dialogOverlay">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+    <span class="dialog-icon">🗑️</span>
+    <div class="dialog-title" id="dialogTitle">この記録を削除しますか？</div>
+    <p class="dialog-msg">削除すると元に戻せません。</p>
+    <!-- 削除対象の詳細情報（JSで書き換える） -->
+    <div class="dialog-target" id="dialogTarget">-- 読み込み中 --</div>
+    <div class="dialog-btns">
+      <button class="btn-cancel"      onclick="closeDialog()">キャンセル</button>
+      <button class="btn-confirm-del" onclick="confirmDelete()">削除する</button>
+    </div>
+  </div>
 </div>
 
-<!-- トースト通知（登録完了時に表示） -->
-<div class="toast" id="toast">✓ 記録しました</div>
+<!-- 登録完了・削除完了のトースト通知 -->
+<div class="toast" id="toast"></div>
 
 
 <script>
   // =============================================
-  // データ管理
-  // localStorageに 'fuelRecords' というキーで配列を保存する
+  // データ管理（localStorage）
   // =============================================
 
-  /**
-   * localStorageからデータを読み込む
-   * 保存データがなければ空配列を返す
-   */
+  /** localStorageから記録を読み込む。なければ空配列 */
   function loadRecords() {
     const raw = localStorage.getItem('fuelRecords');
     return raw ? JSON.parse(raw) : [];
   }
 
-  /**
-   * データをlocalStorageに保存する
-   * @param {Array} records - 保存するレコードの配列
-   */
+  /** 記録をlocalStorageに保存する */
   function saveRecords(records) {
     localStorage.setItem('fuelRecords', JSON.stringify(records));
   }
 
   // =============================================
   // 燃費計算
+  // 燃費(km/L) = 走行距離 ÷ 給油量
   // =============================================
-
-  /**
-   * 燃費を計算する
-   * 燃費(km/L) = 走行距離(km) ÷ 給油量(L)
-   * @param {number} km - 走行距離
-   * @param {number} liter - 給油量
-   * @returns {string} 燃費（小数点1桁）または '--'
-   */
   function calcFuelEff(km, liter) {
     if (!km || !liter || liter <= 0) return '--';
     return (km / liter).toFixed(1);
   }
 
   // =============================================
-  // 初期設定: ページ読み込み時の日付を今日にセット
+  // 日付フォーマット
+  // =============================================
+
+  /** 'YYYY-MM-DD' → 'YYYY年M月D日' */
+  function formatDate(dateStr) {
+    const [y, m, d] = dateStr.split('-');
+    return `${y}年${parseInt(m)}月${parseInt(d)}日`;
+  }
+
+  /** 'YYYY-MM-DD' → 'M/D'（グラフ横軸用の短いラベル） */
+  function shortDate(dateStr) {
+    const [, m, d] = dateStr.split('-');
+    return `${parseInt(m)}/${parseInt(d)}`;
+  }
+
+  // =============================================
+  // 初期設定: 今日の日付をフォームにセット
   // =============================================
   (function setDefaultDate() {
-    const today = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'形式
+    const today = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
     document.getElementById('inputDate').value = today;
   })();
 
   // =============================================
-  // リアルタイムプレビュー
-  // 走行距離か給油量が変わるたびに燃費を計算して表示
+  // リアルタイム燃費プレビュー
+  // 入力のたびに計算して表示する
   // =============================================
   document.getElementById('inputKm').addEventListener('input', updatePreview);
   document.getElementById('inputLiter').addEventListener('input', updatePreview);
@@ -669,87 +843,343 @@
     const liter = parseFloat(document.getElementById('inputLiter').value);
 
     // 入力バリデーション
-    if (!date) { alert('給油日を入力してください'); return; }
-    if (!km || km <= 0) { alert('走行距離を正しく入力してください'); return; }
+    if (!date)            { alert('給油日を入力してください'); return; }
+    if (!km || km <= 0)   { alert('走行距離を正しく入力してください'); return; }
     if (!liter || liter <= 0) { alert('給油量を正しく入力してください'); return; }
 
-    // 燃費を計算
-    const eff = calcFuelEff(km, liter);
-
-    // 新しいレコードオブジェクトを作成
     const record = {
-      id:    Date.now(),   // 一意なIDとして現在時刻(ms)を使用
+      id:    Date.now(), // ユニークID（タイムスタンプ）
       date:  date,
       km:    km,
       liter: liter,
-      eff:   eff
+      eff:   calcFuelEff(km, liter)
     };
 
-    // データを読み込み → 先頭に追加 → 保存
     const records = loadRecords();
-    records.unshift(record); // unshift = 配列の先頭に追加
+    records.unshift(record); // 先頭に追加（最新が上）
     saveRecords(records);
 
-    // 入力欄をリセット（日付はそのまま）
+    // フォームリセット（日付はそのまま）
     document.getElementById('inputKm').value    = '';
     document.getElementById('inputLiter').value = '';
     document.getElementById('previewValue').textContent = '-- km/L';
 
-    // 画面を更新
     render();
     showToast('✓ 記録しました');
   }
 
   // =============================================
-  // レコードを削除する
-  // @param {number} id - 削除するレコードのID
+  // 【新機能】削除確認ダイアログ
+  //
+  // 削除は2ステップ:
+  //   Step1: confirmDeleteRequest(id) → ダイアログを開く
+  //   Step2: confirmDelete()          → 実際に削除を実行
   // =============================================
-  function deleteRecord(id) {
-    // アニメーション付きで削除
+
+  // 削除待ちのIDを一時保存する変数
+  let pendingDeleteId = null;
+
+  /**
+   * Step1: 削除ボタン押下 → ダイアログを表示
+   * @param {number} id - 削除候補のレコードID
+   */
+  function confirmDeleteRequest(id) {
+    pendingDeleteId = id; // IDを記憶
+
+    // 対象レコードを検索してダイアログに情報を表示
+    const target = loadRecords().find(r => r.id === id);
+    if (target) {
+      document.getElementById('dialogTarget').innerHTML =
+        `📅 <strong>${formatDate(target.date)}</strong><br>` +
+        `🛣 ${target.km.toLocaleString()} km ／ 🪣 ${target.liter.toFixed(2)} L<br>` +
+        `⚡ 燃費 ${target.eff} km/L`;
+    }
+
+    // .show を付けてダイアログを表示
+    document.getElementById('dialogOverlay').classList.add('show');
+    // 背景スクロールを止める
+    document.body.style.overflow = 'hidden';
+  }
+
+  /**
+   * キャンセル: ダイアログを閉じる
+   */
+  function closeDialog() {
+    pendingDeleteId = null;
+    document.getElementById('dialogOverlay').classList.remove('show');
+    document.body.style.overflow = '';
+  }
+
+  /**
+   * Step2: 削除実行ボタン → 削除を確定する
+   */
+  function confirmDelete() {
+    if (pendingDeleteId === null) return;
+    const id = pendingDeleteId;
+    closeDialog(); // 先にダイアログを閉じる
+
+    // スライドアウトアニメーションを適用して削除
     const el = document.querySelector(`[data-id="${id}"]`);
     if (el) {
       el.classList.add('removing');
-      // アニメーション終了後にデータを削除して再描画
       el.addEventListener('animationend', () => {
-        const records = loadRecords().filter(r => r.id !== id);
-        saveRecords(records);
+        // アニメーション終了後にデータを削除して再描画
+        saveRecords(loadRecords().filter(r => r.id !== id));
         render();
+        showToast('🗑 削除しました');
       });
+    } else {
+      // DOMが見つからない場合は直接削除
+      saveRecords(loadRecords().filter(r => r.id !== id));
+      render();
+      showToast('🗑 削除しました');
     }
   }
 
+  // オーバーレイの暗幕部分をタップしてもキャンセル
+  document.getElementById('dialogOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeDialog();
+  });
+
   // =============================================
-  // 画面を描画する（メイン関数）
-  // データを読み込んで全UIを更新する
+  // 【新機能】燃費推移グラフ（純粋なSVGで描画）
+  //
+  // 外部ライブラリなし。JavaScriptでSVGタグを
+  // 文字列として組み立て、DOMに挿入する方式。
+  //
+  // グラフの構成要素:
+  //   1. defs        - グラデーション・フィルターの定義
+  //   2. グリッド線  - 水平の点線とY軸ラベル
+  //   3. エリア塗り  - 折れ線下のグラデーション領域
+  //   4. 折れ線      - 燃費の推移ライン
+  //   5. データ点    - 各給油の丸点（グロー付き）
+  //   6. 燃費ラベル  - 各点の数値
+  //   7. X軸ラベル   - 給油日（月/日）
+  //   8. 平均線      - 平均燃費の破線
+  // =============================================
+
+  /**
+   * グラフを描画する
+   * @param {Array} records - 全レコード（新しい順）
+   */
+  function drawGraph(records) {
+    const wrap    = document.getElementById('graphWrap');
+    const emptyEl = document.getElementById('graphEmpty');
+
+    // 2件未満はグラフを出さない
+    if (records.length < 2) {
+      emptyEl.style.display = 'block';
+      const old = wrap.querySelector('svg');
+      if (old) old.remove();
+      return;
+    }
+    emptyEl.style.display = 'none';
+
+    // グラフ用に日付昇順（古い順）に並び替え
+    // records は unshift で新しい順になっているので reverse() で逆順にする
+    const sorted = records.slice().reverse();
+
+    // 燃費の数値配列
+    const effValues = sorted.map(r => parseFloat(r.eff));
+
+    // Y軸の範囲を決める
+    const minEff = Math.min(...effValues);
+    const maxEff = Math.max(...effValues);
+    const yPad   = (maxEff - minEff) * 0.3 || 2; // 最小でも±2の余白を確保
+    const yMin   = Math.max(0, minEff - yPad);
+    const yMax   = maxEff + yPad;
+
+    // ── SVGサイズ計算 ──
+    const PAD_L  = 46;  // 左余白（Y軸ラベル分）
+    const PAD_R  = 18;  // 右余白
+    const PAD_T  = 26;  // 上余白（ラベルが上端で切れないように）
+    const PAD_B  = 36;  // 下余白（X軸ラベル分）
+    const PT_GAP = 64;  // データ点の最小間隔(px)
+    const HEIGHT = 180; // グラフ描画エリアの高さ(px)
+
+    const containerW = wrap.clientWidth || 300;
+    const minW       = sorted.length * PT_GAP + PAD_L + PAD_R;
+    const svgW       = Math.max(containerW, minW);
+    const svgH       = HEIGHT + PAD_T + PAD_B;
+    const drawW      = svgW - PAD_L - PAD_R;
+    const drawH      = HEIGHT;
+
+    // ── 座標計算関数 ──
+    // i番目のデータ点のX座標（均等割り付け）
+    const xPos = i => PAD_L + (drawW / (sorted.length - 1)) * i;
+    // 燃費値vのY座標（上が小さい→グラフ座標を反転）
+    const yPos = v => PAD_T + drawH - ((v - yMin) / (yMax - yMin)) * drawH;
+
+    // polyline用の座標文字列 "x1,y1 x2,y2 ..."
+    const points = sorted
+      .map((r, i) => `${xPos(i).toFixed(1)},${yPos(parseFloat(r.eff)).toFixed(1)}`)
+      .join(' ');
+
+    // エリア塗りつぶし用のパス（折れ線の下をX軸で閉じる）
+    const firstX   = xPos(0).toFixed(1);
+    const lastX    = xPos(sorted.length - 1).toFixed(1);
+    const baseY    = (PAD_T + drawH).toFixed(1);
+    const areaPath = `M ${firstX},${baseY} L ${points} L ${lastX},${baseY} Z`;
+
+    // Y軸グリッド線（均等に5本）
+    const GRID_COUNT = 4;
+    const gridLines  = [];
+    for (let i = 0; i <= GRID_COUNT; i++) {
+      const v = yMin + (yMax - yMin) * (i / GRID_COUNT);
+      gridLines.push({
+        y:     yPos(v).toFixed(1),
+        label: v.toFixed(1)
+      });
+    }
+
+    // 平均燃費を計算（グラフ上に破線で表示）
+    const avgEff = effValues.reduce((s, v) => s + v, 0) / effValues.length;
+    const avgY   = yPos(avgEff).toFixed(1);
+
+    // ── SVG文字列を組み立てる ──
+    const svgHTML = `
+      <svg
+        id="fuelChart"
+        width="${svgW}"
+        height="${svgH}"
+        viewBox="0 0 ${svgW} ${svgH}"
+        xmlns="http://www.w3.org/2000/svg"
+        role="img"
+        aria-label="燃費推移グラフ"
+      >
+        <defs>
+          <!--
+            エリア塗りつぶし用グラデーション
+            上(0%): アクセント色の25%不透明
+            下(100%): ほぼ透明
+          -->
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#3ddc84" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#3ddc84" stop-opacity="0.02"/>
+          </linearGradient>
+          <!--
+            データ点のグロー（光彩）エフェクト
+            feGaussianBlur でぼかし → SourceGraphic（元の図形）と合成
+          -->
+          <filter id="dotGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.5" result="blur"/>
+            <feMerge>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+
+        <!-- ① グリッド線（水平の点線）とY軸ラベル -->
+        ${gridLines.map(g => `
+          <line
+            x1="${PAD_L}" y1="${g.y}"
+            x2="${svgW - PAD_R}" y2="${g.y}"
+            stroke="#2a3347" stroke-width="1" stroke-dasharray="4 4"
+          />
+          <text
+            x="${PAD_L - 6}" y="${g.y}"
+            text-anchor="end" dominant-baseline="middle"
+            font-family="DM Mono, monospace" font-size="9"
+            fill="#7a8ba0"
+          >${g.label}</text>
+        `).join('')}
+
+        <!-- ② エリア塗りつぶし（折れ線の下のグラデーション） -->
+        <path d="${areaPath}" fill="url(#areaGrad)"/>
+
+        <!-- ③ 折れ線本体 -->
+        <polyline
+          points="${points}"
+          fill="none"
+          stroke="#3ddc84"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+
+        <!-- ④ データ点・燃費ラベル・X軸日付ラベル -->
+        ${sorted.map((r, i) => {
+          const x   = xPos(i).toFixed(1);
+          const y   = yPos(parseFloat(r.eff)).toFixed(1);
+          const eff = parseFloat(r.eff).toFixed(1);
+          // ラベルの表示位置: 上端付近なら下に、それ以外は上に
+          const labelY = parseFloat(y) < PAD_T + 22
+            ? parseFloat(y) + 16
+            : parseFloat(y) - 10;
+          return `
+            <!-- グロー付きの大きい円（光彩効果） -->
+            <circle cx="${x}" cy="${y}" r="6"
+              fill="#3ddc84" filter="url(#dotGlow)" opacity="0.4"/>
+            <!-- 実際の点（暗い塗り + アクセント縁取り） -->
+            <circle cx="${x}" cy="${y}" r="4"
+              fill="#0d0f14" stroke="#3ddc84" stroke-width="2.5"/>
+            <!-- 燃費値ラベル -->
+            <text
+              x="${x}" y="${labelY}"
+              text-anchor="middle"
+              font-family="DM Mono, monospace" font-size="10" font-weight="500"
+              fill="#3ddc84"
+            >${eff}</text>
+            <!-- X軸: 給油日（月/日） -->
+            <text
+              x="${x}" y="${svgH - 8}"
+              text-anchor="middle"
+              font-family="DM Mono, monospace" font-size="10"
+              fill="#7a8ba0"
+            >${shortDate(r.date)}</text>
+          `;
+        }).join('')}
+
+        <!-- ⑤ 平均燃費の水平破線 -->
+        <line
+          x1="${PAD_L}" y1="${avgY}"
+          x2="${svgW - PAD_R}" y2="${avgY}"
+          stroke="#2a9960" stroke-width="1" stroke-dasharray="6 3"
+          opacity="0.9"
+        />
+        <text
+          x="${svgW - PAD_R - 2}" y="${parseFloat(avgY) - 4}"
+          text-anchor="end"
+          font-family="DM Mono, monospace" font-size="9"
+          fill="#2a9960"
+        >平均 ${avgEff.toFixed(1)}</text>
+      </svg>
+    `;
+
+    // 既存のSVGを削除してから新しいものを挿入
+    const old = wrap.querySelector('svg');
+    if (old) old.remove();
+    wrap.insertAdjacentHTML('beforeend', svgHTML);
+  }
+
+  // =============================================
+  // 画面全体を再描画するメイン関数
+  // データが変わったら必ずこれを呼ぶ
   // =============================================
   function render() {
     const records = loadRecords();
 
-    // ──── 平均燃費を計算 ────
-    let totalKm    = 0;
-    let totalLiter = 0;
-
+    // ──── 平均燃費バナーを更新 ────
+    let totalKm = 0, totalLiter = 0;
     records.forEach(r => {
       totalKm    += r.km;
       totalLiter += r.liter;
     });
 
-    const avgEff = calcFuelEff(totalKm, totalLiter);
-
-    // 平均燃費バナーを更新
-    document.getElementById('avgValue').textContent  = avgEff;
+    document.getElementById('avgValue').textContent   = calcFuelEff(totalKm, totalLiter);
     document.getElementById('totalCount').textContent = records.length;
     document.getElementById('totalKm').textContent    = totalKm.toLocaleString();
     document.getElementById('totalLiter').textContent = totalLiter.toFixed(1);
-
-    // 件数バッジを更新
     document.getElementById('countBadge').textContent = `${records.length} 件`;
+
+    // ──── グラフを描画 ────
+    drawGraph(records);
 
     // ──── 履歴リストを描画 ────
     const listEl = document.getElementById('historyList');
 
     if (records.length === 0) {
-      // データなし
       listEl.innerHTML = `
         <div class="empty">
           <span class="empty-icon">📋</span>
@@ -759,19 +1189,16 @@
       return;
     }
 
-    // 履歴アイテムをHTMLで生成
-    // records.map() → 各レコードをHTML文字列に変換 → join()で結合
     listEl.innerHTML = `
       <div class="history-list">
         ${records.map(r => `
           <div class="history-item" data-id="${r.id}">
-            <!-- 燃費バッジ -->
+            <!-- 燃費バッジ（円形） -->
             <div class="item-badge">
               <span class="km-l">${r.eff}</span>
               <span class="unit">km/L</span>
             </div>
-
-            <!-- 詳細情報 -->
+            <!-- 詳細 -->
             <div class="item-info">
               <div class="item-date">📅 ${formatDate(r.date)}</div>
               <div class="item-details">
@@ -779,12 +1206,15 @@
                 <div class="item-detail">${r.liter.toFixed(2)}<span> L</span></div>
               </div>
             </div>
-
-            <!-- 削除ボタン -->
+            <!--
+              削除ボタン:
+              クリックすると confirmDeleteRequest() でダイアログを開く
+              （旧: deleteRecord() で直接削除していた部分）
+            -->
             <button
               class="btn-del"
-              onclick="deleteRecord(${r.id})"
-              aria-label="削除"
+              onclick="confirmDeleteRequest(${r.id})"
+              aria-label="削除確認ダイアログを開く"
               title="この記録を削除"
             >✕</button>
           </div>
@@ -794,29 +1224,30 @@
   }
 
   // =============================================
-  // 日付フォーマット
-  // 'YYYY-MM-DD' → 'YYYY年M月D日' に変換
-  // =============================================
-  function formatDate(dateStr) {
-    const [y, m, d] = dateStr.split('-');
-    return `${y}年${parseInt(m)}月${parseInt(d)}日`;
-  }
-
-  // =============================================
-  // トースト通知を表示
+  // トースト通知を表示する
   // @param {string} msg - 表示するメッセージ
   // =============================================
   function showToast(msg) {
     const toast = document.getElementById('toast');
     toast.textContent = msg;
     toast.classList.add('show');
-    // 2秒後に非表示
-    setTimeout(() => toast.classList.remove('show'), 2000);
+    setTimeout(() => toast.classList.remove('show'), 2200);
   }
 
   // =============================================
+  // ウィンドウリサイズ時にグラフを再描画
+  // スマホの画面回転にも対応
+  // =============================================
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    // 200ms 待ってから再描画（連続リサイズを間引くディバウンス処理）
+    resizeTimer = setTimeout(() => drawGraph(loadRecords()), 200);
+  });
+
+  // =============================================
   // 初期描画
-  // ページが読み込まれたら最初に一度描画する
+  // ページ読み込み時に一度だけ実行
   // =============================================
   render();
 </script>
