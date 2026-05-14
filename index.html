@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <!-- スマホで正しく表示するためのビューポート設定 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>燃費ログ</title>
+
+  <!-- Google Fonts: 日本語 + 英字ディスプレイフォント -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    /* =============================================
+       CSS カスタムプロパティ（変数）
+       色やサイズを一か所で管理し、変更を簡単に
+    ============================================= */
+    :root {
+      --bg:          #0d0f14;       /* 最も暗い背景 */
+      --surface:     #161b24;       /* カード背景 */
+      --surface2:    #1e2535;       /* 入力欄・履歴行 */
+      --border:      #2a3347;       /* ボーダー */
+      --accent:      #3ddc84;       /* アクセント緑 */
+      --accent-dim:  #2a9960;       /* 薄いアクセント */
+      --accent-glow: rgba(61,220,132,0.18); /* 光彩 */
+      --text:        #e8edf5;       /* メインテキスト */
+      --text-sub:    #7a8ba0;       /* サブテキスト */
+      --danger:      #ff5a6a;       /* 削除ボタン */
+      --radius:      14px;
+      --radius-sm:   8px;
+      --font-body:   'Noto Sans JP', sans-serif;
+      --font-mono:   'DM Mono', monospace;
+    }
+
+    /* =============================================
+       リセット & 基本スタイル
+    ============================================= */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100svh;
+      /* 微細なグリッドテクスチャで奥行きを演出 */
+      background-image:
+        linear-gradient(rgba(61,220,132,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(61,220,132,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* =============================================
+       レイアウト
+    ============================================= */
+    .app {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 24px 16px 80px;
+    }
+
+    /* =============================================
+       ヘッダー
+    ============================================= */
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+      animation: fadeDown 0.5s ease;
+    }
+
+    .logo-icon {
+      font-size: 36px;
+      display: block;
+      margin-bottom: 6px;
+      filter: drop-shadow(0 0 12px var(--accent));
+    }
+
+    header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--text);
+    }
+
+    header h1 span {
+      color: var(--accent);
+    }
+
+    header p {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 4px;
+      font-family: var(--font-mono);
+    }
+
+    /* =============================================
+       平均燃費バナー（一番目立つ部分）
+    ============================================= */
+    .avg-card {
+      background: linear-gradient(135deg, #1a2d1e 0%, var(--surface) 100%);
+      border: 1px solid var(--accent-dim);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 0 32px var(--accent-glow);
+      animation: fadeUp 0.5s ease 0.1s both;
+    }
+
+    .avg-label {
+      font-size: 12px;
+      color: var(--text-sub);
+      font-family: var(--font-mono);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .avg-value {
+      font-size: 42px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--accent);
+      line-height: 1;
+      /* 数字が変わるときにアニメーション */
+      transition: transform 0.3s ease;
+    }
+
+    .avg-unit {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-top: 4px;
+      font-family: var(--font-mono);
+    }
+
+    .avg-stats {
+      text-align: right;
+    }
+
+    .avg-stat-item {
+      font-size: 11px;
+      color: var(--text-sub);
+      font-family: var(--font-mono);
+    }
+
+    .avg-stat-item strong {
+      color: var(--text);
+    }
+
+    /* =============================================
+       入力フォームカード
+    ============================================= */
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      animation: fadeUp 0.5s ease 0.2s both;
+    }
+
+    .form-card h2 {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-sub);
+      font-family: var(--font-mono);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-card h2::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 13px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    /* フォームグリッド: 2列レイアウト */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    /* 給油日は1列全幅 */
+    .form-grid .full {
+      grid-column: 1 / -1;
+    }
+
+    /* ラベルとインプットのセット */
+    .field label {
+      display: block;
+      font-size: 11px;
+      color: var(--text-sub);
+      font-family: var(--font-mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .field input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 15px;
+      font-family: var(--font-body);
+      padding: 10px 12px;
+      outline: none;
+      /* フォーカス時にアクセントカラーのボーダー */
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none;
+    }
+
+    .field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    /* date インプットのカラーピッカー部分を合わせる */
+    .field input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.6);
+      cursor: pointer;
+    }
+
+    /* 燃費プレビュー（入力中にリアルタイム表示） */
+    .preview {
+      background: var(--surface2);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .preview-value {
+      color: var(--accent);
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    /* 登録ボタン */
+    .btn-add {
+      width: 100%;
+      background: var(--accent);
+      color: #0a1a0e;  /* 濃い緑で視認性を確保 */
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 700;
+      font-family: var(--font-body);
+      padding: 13px;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: opacity 0.2s, transform 0.1s;
+      /* タップ時のフィードバック */
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-add:active {
+      opacity: 0.85;
+      transform: scale(0.98);
+    }
+
+    /* =============================================
+       履歴セクション
+    ============================================= */
+    .history-section {
+      animation: fadeUp 0.5s ease 0.3s both;
+    }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .history-header h2 {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-sub);
+      font-family: var(--font-mono);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .history-header h2::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 13px;
+      background: var(--text-sub);
+      border-radius: 2px;
+    }
+
+    .count-badge {
+      background: var(--surface2);
+      color: var(--text-sub);
+      font-size: 11px;
+      font-family: var(--font-mono);
+      padding: 3px 9px;
+      border-radius: 999px;
+    }
+
+    /* 履歴が空のとき */
+    .empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-sub);
+      font-size: 13px;
+      font-family: var(--font-mono);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+    }
+
+    .empty-icon {
+      font-size: 32px;
+      display: block;
+      margin-bottom: 10px;
+      opacity: 0.5;
+    }
+
+    /* 履歴リスト */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* 履歴アイテム */
+    .history-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      /* 追加アニメーション */
+      animation: fadeLeft 0.35s ease;
+      transition: border-color 0.2s;
+    }
+
+    .history-item:hover {
+      border-color: var(--border);
+    }
+
+    /* 燃費の数値（円形バッジ） */
+    .item-badge {
+      flex-shrink: 0;
+      width: 52px;
+      height: 52px;
+      background: var(--surface2);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+    }
+
+    .item-badge .km-l {
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--accent);
+      line-height: 1.1;
+    }
+
+    .item-badge .unit {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-sub);
+    }
+
+    /* 詳細テキスト */
+    .item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .item-date {
+      font-size: 12px;
+      color: var(--text-sub);
+      font-family: var(--font-mono);
+      margin-bottom: 4px;
+    }
+
+    .item-details {
+      display: flex;
+      gap: 12px;
+    }
+
+    .item-detail {
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .item-detail span {
+      color: var(--text-sub);
+      font-size: 11px;
+    }
+
+    /* 削除ボタン */
+    .btn-del {
+      flex-shrink: 0;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-sub);
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-del:active {
+      background: rgba(255,90,106,0.15);
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    /* =============================================
+       アニメーション
+    ============================================= */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeLeft {
+      from { opacity: 0; transform: translateX(16px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* 削除アニメーション */
+    .removing {
+      animation: slideOut 0.3s ease forwards;
+    }
+
+    @keyframes slideOut {
+      to { opacity: 0; transform: translateX(-20px); max-height: 0; margin: 0; padding: 0; overflow: hidden; }
+    }
+
+    /* =============================================
+       トースト通知（登録完了メッセージ）
+    ============================================= */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--accent);
+      color: #0a1a0e;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 10px 22px;
+      border-radius: 999px;
+      z-index: 100;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+      opacity: 0;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+<!-- =============================================
+     HTMLの構造
+     .app → header / avg-card / form-card / history-section
+============================================= -->
+<div class="app">
+
+  <!-- ── ヘッダー ── -->
+  <header>
+    <span class="logo-icon">⛽</span>
+    <h1>燃費<span>ログ</span></h1>
+    <p>FUEL EFFICIENCY TRACKER</p>
+  </header>
+
+  <!-- ── 平均燃費バナー ── -->
+  <div class="avg-card" id="avgCard">
+    <div>
+      <div class="avg-label">平均燃費</div>
+      <div class="avg-value" id="avgValue">--</div>
+      <div class="avg-unit">km / L</div>
+    </div>
+    <div class="avg-stats" id="avgStats">
+      <div class="avg-stat-item">給油回数: <strong id="totalCount">0</strong> 回</div>
+      <div class="avg-stat-item">総走行距離: <strong id="totalKm">0</strong> km</div>
+      <div class="avg-stat-item">総給油量: <strong id="totalLiter">0.0</strong> L</div>
+    </div>
+  </div>
+
+  <!-- ── 入力フォーム ── -->
+  <div class="form-card">
+    <h2>給油を記録</h2>
+
+    <div class="form-grid">
+      <!-- 給油日 (full幅) -->
+      <div class="field full">
+        <label for="inputDate">📅 給油日</label>
+        <input type="date" id="inputDate" />
+      </div>
+
+      <!-- 走行距離 -->
+      <div class="field">
+        <label for="inputKm">🛣 走行距離</label>
+        <input
+          type="number"
+          id="inputKm"
+          placeholder="例: 450"
+          min="0"
+          step="0.1"
+          inputmode="decimal"
+        />
+      </div>
+
+      <!-- 給油量 -->
+      <div class="field">
+        <label for="inputLiter">🪣 給油量 (L)</label>
+        <input
+          type="number"
+          id="inputLiter"
+          placeholder="例: 40.0"
+          min="0.1"
+          step="0.01"
+          inputmode="decimal"
+        />
+      </div>
+    </div>
+
+    <!-- 燃費プレビュー（入力中にリアルタイム更新） -->
+    <div class="preview">
+      <span>このときの燃費</span>
+      <span class="preview-value" id="previewValue">-- km/L</span>
+    </div>
+
+    <!-- 登録ボタン -->
+    <button class="btn-add" id="btnAdd" onclick="addRecord()">＋ 記録する</button>
+  </div>
+
+  <!-- ── 給油履歴 ── -->
+  <div class="history-section">
+    <div class="history-header">
+      <h2>給油履歴</h2>
+      <span class="count-badge" id="countBadge">0 件</span>
+    </div>
+    <!-- 履歴アイテムをJavaScriptで動的に追加する場所 -->
+    <div id="historyList"></div>
+  </div>
+
+</div>
+
+<!-- トースト通知（登録完了時に表示） -->
+<div class="toast" id="toast">✓ 記録しました</div>
+
+
+<script>
+  // =============================================
+  // データ管理
+  // localStorageに 'fuelRecords' というキーで配列を保存する
+  // =============================================
+
+  /**
+   * localStorageからデータを読み込む
+   * 保存データがなければ空配列を返す
+   */
+  function loadRecords() {
+    const raw = localStorage.getItem('fuelRecords');
+    return raw ? JSON.parse(raw) : [];
+  }
+
+  /**
+   * データをlocalStorageに保存する
+   * @param {Array} records - 保存するレコードの配列
+   */
+  function saveRecords(records) {
+    localStorage.setItem('fuelRecords', JSON.stringify(records));
+  }
+
+  // =============================================
+  // 燃費計算
+  // =============================================
+
+  /**
+   * 燃費を計算する
+   * 燃費(km/L) = 走行距離(km) ÷ 給油量(L)
+   * @param {number} km - 走行距離
+   * @param {number} liter - 給油量
+   * @returns {string} 燃費（小数点1桁）または '--'
+   */
+  function calcFuelEff(km, liter) {
+    if (!km || !liter || liter <= 0) return '--';
+    return (km / liter).toFixed(1);
+  }
+
+  // =============================================
+  // 初期設定: ページ読み込み時の日付を今日にセット
+  // =============================================
+  (function setDefaultDate() {
+    const today = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'形式
+    document.getElementById('inputDate').value = today;
+  })();
+
+  // =============================================
+  // リアルタイムプレビュー
+  // 走行距離か給油量が変わるたびに燃費を計算して表示
+  // =============================================
+  document.getElementById('inputKm').addEventListener('input', updatePreview);
+  document.getElementById('inputLiter').addEventListener('input', updatePreview);
+
+  function updatePreview() {
+    const km    = parseFloat(document.getElementById('inputKm').value);
+    const liter = parseFloat(document.getElementById('inputLiter').value);
+    const eff   = calcFuelEff(km, liter);
+    document.getElementById('previewValue').textContent =
+      eff === '--' ? '-- km/L' : `${eff} km/L`;
+  }
+
+  // =============================================
+  // レコードを追加する
+  // =============================================
+  function addRecord() {
+    const date  = document.getElementById('inputDate').value;
+    const km    = parseFloat(document.getElementById('inputKm').value);
+    const liter = parseFloat(document.getElementById('inputLiter').value);
+
+    // 入力バリデーション
+    if (!date) { alert('給油日を入力してください'); return; }
+    if (!km || km <= 0) { alert('走行距離を正しく入力してください'); return; }
+    if (!liter || liter <= 0) { alert('給油量を正しく入力してください'); return; }
+
+    // 燃費を計算
+    const eff = calcFuelEff(km, liter);
+
+    // 新しいレコードオブジェクトを作成
+    const record = {
+      id:    Date.now(),   // 一意なIDとして現在時刻(ms)を使用
+      date:  date,
+      km:    km,
+      liter: liter,
+      eff:   eff
+    };
+
+    // データを読み込み → 先頭に追加 → 保存
+    const records = loadRecords();
+    records.unshift(record); // unshift = 配列の先頭に追加
+    saveRecords(records);
+
+    // 入力欄をリセット（日付はそのまま）
+    document.getElementById('inputKm').value    = '';
+    document.getElementById('inputLiter').value = '';
+    document.getElementById('previewValue').textContent = '-- km/L';
+
+    // 画面を更新
+    render();
+    showToast('✓ 記録しました');
+  }
+
+  // =============================================
+  // レコードを削除する
+  // @param {number} id - 削除するレコードのID
+  // =============================================
+  function deleteRecord(id) {
+    // アニメーション付きで削除
+    const el = document.querySelector(`[data-id="${id}"]`);
+    if (el) {
+      el.classList.add('removing');
+      // アニメーション終了後にデータを削除して再描画
+      el.addEventListener('animationend', () => {
+        const records = loadRecords().filter(r => r.id !== id);
+        saveRecords(records);
+        render();
+      });
+    }
+  }
+
+  // =============================================
+  // 画面を描画する（メイン関数）
+  // データを読み込んで全UIを更新する
+  // =============================================
+  function render() {
+    const records = loadRecords();
+
+    // ──── 平均燃費を計算 ────
+    let totalKm    = 0;
+    let totalLiter = 0;
+
+    records.forEach(r => {
+      totalKm    += r.km;
+      totalLiter += r.liter;
+    });
+
+    const avgEff = calcFuelEff(totalKm, totalLiter);
+
+    // 平均燃費バナーを更新
+    document.getElementById('avgValue').textContent  = avgEff;
+    document.getElementById('totalCount').textContent = records.length;
+    document.getElementById('totalKm').textContent    = totalKm.toLocaleString();
+    document.getElementById('totalLiter').textContent = totalLiter.toFixed(1);
+
+    // 件数バッジを更新
+    document.getElementById('countBadge').textContent = `${records.length} 件`;
+
+    // ──── 履歴リストを描画 ────
+    const listEl = document.getElementById('historyList');
+
+    if (records.length === 0) {
+      // データなし
+      listEl.innerHTML = `
+        <div class="empty">
+          <span class="empty-icon">📋</span>
+          まだ記録がありません<br>給油したら上のフォームから登録してみましょう
+        </div>
+      `;
+      return;
+    }
+
+    // 履歴アイテムをHTMLで生成
+    // records.map() → 各レコードをHTML文字列に変換 → join()で結合
+    listEl.innerHTML = `
+      <div class="history-list">
+        ${records.map(r => `
+          <div class="history-item" data-id="${r.id}">
+            <!-- 燃費バッジ -->
+            <div class="item-badge">
+              <span class="km-l">${r.eff}</span>
+              <span class="unit">km/L</span>
+            </div>
+
+            <!-- 詳細情報 -->
+            <div class="item-info">
+              <div class="item-date">📅 ${formatDate(r.date)}</div>
+              <div class="item-details">
+                <div class="item-detail">${r.km.toLocaleString()}<span> km</span></div>
+                <div class="item-detail">${r.liter.toFixed(2)}<span> L</span></div>
+              </div>
+            </div>
+
+            <!-- 削除ボタン -->
+            <button
+              class="btn-del"
+              onclick="deleteRecord(${r.id})"
+              aria-label="削除"
+              title="この記録を削除"
+            >✕</button>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // =============================================
+  // 日付フォーマット
+  // 'YYYY-MM-DD' → 'YYYY年M月D日' に変換
+  // =============================================
+  function formatDate(dateStr) {
+    const [y, m, d] = dateStr.split('-');
+    return `${y}年${parseInt(m)}月${parseInt(d)}日`;
+  }
+
+  // =============================================
+  // トースト通知を表示
+  // @param {string} msg - 表示するメッセージ
+  // =============================================
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    // 2秒後に非表示
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+
+  // =============================================
+  // 初期描画
+  // ページが読み込まれたら最初に一度描画する
+  // =============================================
+  render();
+</script>
+</body>
+</html>
