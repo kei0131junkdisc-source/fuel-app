@@ -5,11 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>燃費ログ</title>
 
-  <!-- ======================================================
-    PWA メタタグ（iOS Safari 向け）
-    Android は manifest.json が主役だが、
-    iOS は <meta> タグでホーム画面追加を制御する
-  ====================================================== -->
+  <!-- PWA メタタグ（iOS Safari 向け） -->
   <meta name="apple-mobile-web-app-capable"          content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title"            content="燃費ログ" />
@@ -23,7 +19,6 @@
   <style>
     /* ================================================================
        デザイントークン（CSS 変数）
-       色・フォント・余白をここに集約し、全体で統一する
     ================================================================ */
     :root {
       --bg:          #0d0f14;
@@ -37,6 +32,8 @@
       --text-sub:    #7a8ba0;
       --danger:      #ff5a6a;
       --danger-dim:  rgba(255,90,106,0.12);
+      --warn:        #ffb547;
+      --warn-dim:    rgba(255,181,71,0.12);
       --info:        #4da6ff;
       --radius:      14px;
       --radius-sm:   8px;
@@ -56,7 +53,6 @@
       font-size: 15px;
       line-height: 1.6;
       min-height: 100svh;
-      /* 微細グリッドテクスチャ */
       background-image:
         linear-gradient(rgba(61,220,132,0.03) 1px, transparent 1px),
         linear-gradient(90deg, rgba(61,220,132,0.03) 1px, transparent 1px);
@@ -64,19 +60,15 @@
     }
 
     /* ================================================================
-       ローディング画面
-       IndexedDB の初期化・移行が終わるまでアプリをブロックする。
-       完了後は JS で .fade クラスを付与してフェードアウト。
+       スプラッシュ（ローディング）画面
+       IndexedDB 初期化が終わるまで全面をブロックする
     ================================================================ */
     #splash {
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background: var(--bg);
       z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
       gap: 18px;
       transition: opacity 0.35s ease;
     }
@@ -93,24 +85,15 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    #splashMsg {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text-sub);
-      letter-spacing: 0.06em;
-    }
+    #splashMsg { font-family: var(--mono); font-size: 12px; color: var(--text-sub); letter-spacing: 0.06em; }
 
     /* ================================================================
        メインレイアウト
     ================================================================ */
-    .app {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 24px 16px 100px;
-    }
+    .app { max-width: 480px; margin: 0 auto; padding: 24px 16px 100px; }
 
     /* ================================================================
-       バナー類（共通ベース）
+       バナー（通知帯）共通
     ================================================================ */
     .banner {
       border-radius: var(--radius);
@@ -118,11 +101,10 @@
       margin-bottom: 14px;
       font-size: 13px;
       animation: fadeDown 0.4s ease;
-      display: none; /* JS で visible クラスを付ける */
+      display: none;
     }
     .banner.visible { display: block; }
 
-    /* 移行完了バナー */
     .banner-migration {
       background: var(--surface);
       border: 1px solid var(--accent-dim);
@@ -131,7 +113,6 @@
     }
     .banner-migration strong { display: block; color: var(--accent); margin-bottom: 2px; }
 
-    /* エラーバナー */
     .banner-error {
       background: var(--surface);
       border: 1px solid var(--danger);
@@ -151,41 +132,27 @@
     .banner-pwa-text { flex: 1; }
     .banner-pwa-text strong { display: block; color: var(--text); font-size: 14px; margin-bottom: 2px; }
     .btn-install {
-      flex-shrink: 0;
-      background: var(--info);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius-sm);
+      flex-shrink: 0; background: var(--info); color: #fff;
+      border: none; border-radius: var(--radius-sm);
       font-size: 12px; font-weight: 700; font-family: var(--font);
       padding: 7px 14px; cursor: pointer; white-space: nowrap;
     }
     .btn-dismiss-pwa {
-      flex-shrink: 0;
-      background: none; border: none;
+      flex-shrink: 0; background: none; border: none;
       color: var(--text-sub); font-size: 20px; cursor: pointer; line-height: 1; padding: 2px;
     }
 
     /* ================================================================
-       オフライン / オンライン ステータスバー
+       ネットワーク状態バー（オフライン時のみ表示）
     ================================================================ */
     #networkBar {
-      display: none;
-      align-items: center;
-      gap: 8px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 7px 14px;
-      margin-bottom: 14px;
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text-sub);
+      display: none; align-items: center; gap: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 7px 14px; margin-bottom: 14px;
+      font-family: var(--mono); font-size: 12px; color: var(--text-sub);
     }
     #networkBar.visible { display: flex; }
-    .net-dot {
-      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-      background: var(--text-sub);
-    }
+    .net-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--text-sub); }
     .net-dot.online  { background: var(--accent); }
     .net-dot.offline { background: var(--danger); animation: blink 1.4s ease infinite; }
     @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
@@ -193,28 +160,20 @@
     /* ================================================================
        ヘッダー
     ================================================================ */
-    header {
-      text-align: center;
-      margin-bottom: 28px;
-      animation: fadeDown 0.5s ease;
-    }
+    header { text-align: center; margin-bottom: 28px; animation: fadeDown 0.5s ease; }
     .logo { font-size: 38px; display: block; margin-bottom: 6px; filter: drop-shadow(0 0 14px var(--accent)); }
     header h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.04em; }
     header h1 em { color: var(--accent); font-style: normal; }
     header p { font-size: 11px; color: var(--text-sub); margin-top: 3px; font-family: var(--mono); letter-spacing: 0.1em; }
 
     /* ================================================================
-       平均燃費バナーカード
+       平均燃費カード
     ================================================================ */
     .avg-card {
       background: linear-gradient(135deg, #1a2d1e 0%, var(--surface) 100%);
-      border: 1px solid var(--accent-dim);
-      border-radius: var(--radius);
-      padding: 20px 22px;
-      margin-bottom: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      border: 1px solid var(--accent-dim); border-radius: var(--radius);
+      padding: 20px 22px; margin-bottom: 18px;
+      display: flex; align-items: center; justify-content: space-between;
       box-shadow: 0 0 36px var(--accent-glow);
       animation: fadeUp 0.5s ease 0.05s both;
     }
@@ -229,17 +188,12 @@
        グラフカード
     ================================================================ */
     .graph-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px 18px 14px;
-      margin-bottom: 18px;
-      animation: fadeUp 0.5s ease 0.1s both;
-      overflow: hidden;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 18px 14px; margin-bottom: 18px;
+      animation: fadeUp 0.5s ease 0.1s both; overflow: hidden;
     }
     .graph-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    #chartSvg { display: block; min-width: 100%; }
-    .graph-empty { text-align: center; padding: 22px 0; color: var(--text-sub); font-size: 13px; font-family: var(--mono); }
+    .graph-empty  { text-align: center; padding: 22px 0; color: var(--text-sub); font-size: 13px; font-family: var(--mono); }
 
     /* ================================================================
        セクションタイトル（共通）
@@ -247,8 +201,7 @@
     .sec-title {
       font-size: 11px; font-weight: 500; color: var(--text-sub);
       font-family: var(--mono); letter-spacing: 0.12em; text-transform: uppercase;
-      margin-bottom: 14px;
-      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
     }
     .sec-title::before {
       content: ''; display: block;
@@ -260,11 +213,8 @@
        入力フォームカード
     ================================================================ */
     .form-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px;
-      margin-bottom: 18px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px; margin-bottom: 18px;
       animation: fadeUp 0.5s ease 0.15s both;
     }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-bottom: 11px; }
@@ -288,8 +238,7 @@
       background: var(--surface2); border: 1px dashed var(--border);
       border-radius: var(--radius-sm); padding: 9px 13px;
       font-family: var(--mono); font-size: 13px; color: var(--text-sub);
-      margin-bottom: 13px;
-      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 13px; display: flex; justify-content: space-between; align-items: center;
     }
     #previewVal { color: var(--accent); font-size: 19px; font-weight: 500; }
 
@@ -303,6 +252,71 @@
     }
     .btn-add:disabled { opacity: 0.35; cursor: not-allowed; }
     .btn-add:not(:disabled):active { opacity: 0.82; transform: scale(0.98); }
+
+    /* ================================================================
+       バックアップ / 復元カード
+       ================================================================
+       iPhoneでは <a download> がファイルとして保存されないため、
+       iOS は「ファイルに保存」を案内するインフォメーションを表示する。
+       復元は <input type="file" accept=".json"> を非表示に置き、
+       ボタンタップで click() を呼ぶことでファイルピッカーを開く。
+    ================================================================ */
+    .backup-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px; margin-bottom: 18px;
+      animation: fadeUp 0.5s ease 0.18s both;
+    }
+
+    /* 2 列ボタングリッド */
+    .backup-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+
+    /* バックアップボタン（アクセントカラー） */
+    .btn-backup {
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      background: var(--surface2); color: var(--text);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 700; font-family: var(--font);
+      padding: 13px 10px; cursor: pointer;
+      transition: background 0.18s, border-color 0.18s, color 0.18s;
+      -webkit-tap-highlight-color: transparent;
+      text-align: center;
+    }
+    .btn-backup:active { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
+    .btn-backup .btn-icon { font-size: 18px; flex-shrink: 0; }
+
+    /* 復元ボタン（警告カラー） */
+    .btn-restore {
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      background: var(--surface2); color: var(--text);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 700; font-family: var(--font);
+      padding: 13px 10px; cursor: pointer;
+      transition: background 0.18s, border-color 0.18s, color 0.18s;
+      -webkit-tap-highlight-color: transparent;
+      text-align: center;
+    }
+    .btn-restore:active { background: var(--warn-dim); border-color: var(--warn); color: var(--warn); }
+    .btn-restore .btn-icon { font-size: 18px; flex-shrink: 0; }
+
+    /*
+      iPhone ではファイル保存の動作が異なるため案内文を表示する。
+      JS で iOS を検出したときだけ .visible を付ける。
+    */
+    .ios-hint {
+      display: none;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 13px;
+      font-size: 12px; color: var(--text-sub); font-family: var(--mono);
+      line-height: 1.6;
+    }
+    .ios-hint.visible { display: block; }
+    .ios-hint strong  { color: var(--text); }
+
+    /* バックアップ情報行（最終バックアップ日時） */
+    .backup-meta {
+      font-size: 11px; color: var(--text-sub); font-family: var(--mono);
+      margin-top: 10px; text-align: center;
+    }
 
     /* ================================================================
        履歴セクション
@@ -362,7 +376,7 @@
     .btn-del:active { background: var(--danger-dim); border-color: var(--danger); color: var(--danger); }
 
     /* ================================================================
-       削除確認ダイアログ
+       オーバーレイ（モーダル共通）
     ================================================================ */
     .overlay {
       position: fixed; inset: 0;
@@ -377,30 +391,46 @@
     }
     .overlay.open { opacity: 1; pointer-events: auto; }
 
-    .dialog {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-top: 3px solid var(--danger);
-      border-radius: var(--radius);
-      padding: 26px 22px 18px;
-      width: 100%; max-width: 310px;
+    /* ================================================================
+       削除確認ダイアログ
+    ================================================================ */
+    .dlg-delete {
+      background: var(--surface); border: 1px solid var(--border);
+      border-top: 3px solid var(--danger); border-radius: var(--radius);
+      padding: 26px 22px 18px; width: 100%; max-width: 310px;
       transform: scale(0.9) translateY(12px);
       transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
     }
-    .overlay.open .dialog { transform: scale(1) translateY(0); }
+    .overlay.open .dlg-delete { transform: scale(1) translateY(0); }
 
+    /* ================================================================
+       復元確認ダイアログ
+       ================================================================
+       削除ダイアログと同じ構造だが警告色（オレンジ）で区別する。
+       復元は全データ上書きなので「危険度」が高い操作。
+    ================================================================ */
+    .dlg-restore {
+      background: var(--surface); border: 1px solid var(--border);
+      border-top: 3px solid var(--warn); border-radius: var(--radius);
+      padding: 26px 22px 18px; width: 100%; max-width: 330px;
+      transform: scale(0.9) translateY(12px);
+      transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .overlay.open .dlg-restore { transform: scale(1) translateY(0); }
+
+    /* ダイアログ内共通パーツ */
     .dlg-icon  { font-size: 30px; display: block; text-align: center; margin-bottom: 10px; }
     .dlg-title { font-size: 16px; font-weight: 700; text-align: center; margin-bottom: 6px; }
     .dlg-sub   { font-size: 13px; color: var(--text-sub); text-align: center; margin-bottom: 10px; line-height: 1.5; }
     .dlg-target {
       background: var(--surface2); border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 9px 13px; margin-bottom: 18px;
+      border-radius: var(--radius-sm); padding: 9px 13px; margin-bottom: 18px;
       font-family: var(--mono); font-size: 12px; color: var(--text-sub);
       text-align: center; line-height: 1.8;
     }
     .dlg-target strong { color: var(--text); }
     .dlg-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+
     .btn-cancel {
       background: var(--surface2); color: var(--text);
       border: 1px solid var(--border); border-radius: var(--radius-sm);
@@ -409,14 +439,26 @@
       -webkit-tap-highlight-color: transparent;
     }
     .btn-cancel:active { opacity: 0.7; }
-    .btn-del-confirm {
+
+    /* 削除実行ボタン（赤） */
+    .btn-del-exec {
       background: var(--danger); color: #fff; border: none;
       border-radius: var(--radius-sm);
       font-size: 14px; font-weight: 700; font-family: var(--font);
       padding: 12px; cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
-    .btn-del-confirm:active { opacity: 0.78; }
+    .btn-del-exec:active { opacity: 0.78; }
+
+    /* 復元実行ボタン（警告オレンジ） */
+    .btn-restore-exec {
+      background: var(--warn); color: #1a0f00; border: none;
+      border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 700; font-family: var(--font);
+      padding: 12px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-restore-exec:active { opacity: 0.78; }
 
     /* ================================================================
        アニメーション
@@ -444,32 +486,30 @@
       transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1), opacity 0.28s;
     }
     #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* 警告色トースト（復元完了など） */
+    #toast.warn { background: var(--warn); color: #1a0f00; }
   </style>
 </head>
 <body>
 
-<!-- ================================================================
-     ローディング（スプラッシュ）画面
-     IndexedDB 初期化・移行が完了するまで表示する
-================================================================ -->
+<!-- スプラッシュ画面 -->
 <div id="splash">
   <span class="splash-icon">⛽</span>
   <div class="spinner"></div>
   <div id="splashMsg">起動中...</div>
 </div>
 
-<!-- ================================================================
-     メインアプリ
-================================================================ -->
+<!-- メインアプリ -->
 <div class="app">
 
-  <!-- 移行完了バナー（1回限り表示） -->
+  <!-- 移行完了バナー -->
   <div class="banner banner-migration" id="bannerMigration">
     <strong>✅ データを移行しました</strong>
     既存の給油記録を IndexedDB へ安全に移行しました。
   </div>
 
-  <!-- エラーバナー（DB 異常時に表示） -->
+  <!-- エラーバナー -->
   <div class="banner banner-error" id="bannerError">
     <strong>⚠ データベースエラー</strong>
     <span id="bannerErrorMsg"></span>
@@ -485,7 +525,7 @@
     <button class="btn-dismiss-pwa" id="btnDismissPwa" aria-label="閉じる">×</button>
   </div>
 
-  <!-- ネットワーク状態バー（オフライン時のみ表示） -->
+  <!-- ネットワーク状態バー -->
   <div id="networkBar">
     <div class="net-dot" id="netDot"></div>
     <span id="netMsg"></span>
@@ -502,7 +542,7 @@
   <div class="avg-card">
     <div>
       <div class="avg-label">平均燃費</div>
-      <div class="avg-num"  id="avgNum">--</div>
+      <div class="avg-num" id="avgNum">--</div>
       <div class="avg-unit">km / L</div>
     </div>
     <div class="avg-stats">
@@ -517,7 +557,6 @@
     <div class="sec-title">燃費推移グラフ</div>
     <div class="graph-scroll" id="graphScroll">
       <div class="graph-empty" id="graphEmpty">📊 記録が 2 件以上あるとグラフが表示されます</div>
-      <!-- SVG は JS で生成して挿入 -->
     </div>
   </div>
 
@@ -542,11 +581,68 @@
       <span>このときの燃費</span>
       <span id="previewVal">-- km/L</span>
     </div>
-    <!-- DB 準備完了まで disabled -->
     <button class="btn-add" id="btnAdd" disabled>準備中...</button>
   </div>
 
-  <!-- 給油履歴 -->
+  <!-- ================================================================
+       バックアップ / 復元カード
+       ================================================================
+       【エクスポート】
+         IndexedDB の全レコードを JSON 化し、
+         <a download> でダウンロードさせる。
+         iPhone Safari は <a download> を無視するため、
+         代わりに window.open() でテキストを新タブで開き、
+         「ファイルに保存」を案内するヒントを表示する。
+
+       【インポート（復元）】
+         非表示の <input type="file"> に click() してファイルを選ばせ、
+         FileReader で JSON を読み込む。
+         バリデーション後に確認ダイアログを表示してから上書き。
+         iPhone でも <input type="file"> は動作する。
+  ================================================================ -->
+  <div class="backup-card">
+    <div class="sec-title">バックアップ / 復元</div>
+
+    <div class="backup-btns">
+      <!-- バックアップボタン -->
+      <button class="btn-backup" id="btnBackup">
+        <span class="btn-icon">💾</span>
+        <span>バックアップ</span>
+      </button>
+
+      <!-- 復元ボタン -->
+      <button class="btn-restore" id="btnRestoreOpen">
+        <span class="btn-icon">📂</span>
+        <span>復元</span>
+      </button>
+    </div>
+
+    <!--
+      iPhone 用ヒント:
+      iOS は <a download> でファイルを保存できないため、
+      JSON テキストを新タブで開いた後の操作方法を説明する。
+      JS で iOS 判定して .visible を付与する。
+    -->
+    <div class="ios-hint" id="iosHint">
+      <strong>📱 iPhone でのバックアップ保存方法</strong><br>
+      「バックアップ」を押すと JSON が新しいタブで開きます。<br>
+      画面を長押し →「共有」→「ファイルに保存」で端末に保存できます。
+    </div>
+
+    <!-- 最終バックアップ日時（localStorage に記録） -->
+    <div class="backup-meta" id="backupMeta">最終バックアップ: なし</div>
+
+    <!--
+      ファイル選択 input（非表示）
+      accept=".json" で JSON ファイルだけを選べるようにする。
+      iPhone Safari も .json フィルタに対応している。
+      復元ボタンの click() でこの input を開く。
+    -->
+    <input type="file" id="fileInput" accept=".json,application/json"
+           style="display:none" aria-hidden="true" />
+  </div>
+
+  <!-- 履歴 -->
   <div class="history-section">
     <div class="history-hd">
       <h2>給油履歴</h2>
@@ -560,16 +656,39 @@
 
 </div><!-- /.app -->
 
-<!-- 削除確認ダイアログ -->
-<div class="overlay" id="overlay">
-  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+<!-- ================================================================
+     削除確認ダイアログ
+================================================================ -->
+<div class="overlay" id="overlayDelete">
+  <div class="dlg-delete" role="dialog" aria-modal="true" aria-labelledby="dlgDelTitle">
     <span class="dlg-icon">🗑️</span>
-    <div class="dlg-title" id="dlgTitle">この記録を削除しますか？</div>
+    <div class="dlg-title" id="dlgDelTitle">この記録を削除しますか？</div>
     <p class="dlg-sub">削除すると元に戻せません。</p>
-    <div class="dlg-target" id="dlgTarget">…</div>
+    <div class="dlg-target" id="dlgDelTarget">…</div>
     <div class="dlg-btns">
-      <button class="btn-cancel"      onclick="closeDialog()">キャンセル</button>
-      <button class="btn-del-confirm" onclick="execDelete()">削除する</button>
+      <button class="btn-cancel"   onclick="closeDeleteDialog()">キャンセル</button>
+      <button class="btn-del-exec" onclick="execDelete()">削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     復元確認ダイアログ
+     ================================================================
+     復元は全データを上書きする破壊的操作なので、
+     件数・バックアップ日時などの詳細情報を表示して
+     ユーザーに意図的な選択をさせる。
+================================================================ -->
+<div class="overlay" id="overlayRestore">
+  <div class="dlg-restore" role="dialog" aria-modal="true" aria-labelledby="dlgRestoreTitle">
+    <span class="dlg-icon">⚠️</span>
+    <div class="dlg-title" id="dlgRestoreTitle">データを復元しますか？</div>
+    <p class="dlg-sub">現在のデータはすべて上書きされます。<br>この操作は取り消せません。</p>
+    <!-- 復元対象ファイルの情報（JS で書き込む） -->
+    <div class="dlg-target" id="dlgRestoreTarget">…</div>
+    <div class="dlg-btns">
+      <button class="btn-cancel"      onclick="closeRestoreDialog()">キャンセル</button>
+      <button class="btn-restore-exec" onclick="execRestore()">復元する</button>
     </div>
   </div>
 </div>
@@ -580,38 +699,23 @@
 
 <script>
 'use strict';
+
 /* ================================================================
-   ①  PWA — Service Worker を Blob URL でインライン登録
-   ================================================================
-   PWA のオフライン対応には Service Worker (SW) が必須。
-   SW は通常 sw.js のような別ファイルが必要だが、
-   Blob URL を使うと 1 ファイルで完結できる。
-
-   ポイント:
-   - Blob URL から登録した SW のスコープはページの origin に
-     縛られるが、Cache-First でページ自体をキャッシュするので
-     オフライン動作に支障はない。
-   - HTTPS または localhost 以外では SW は動作しない
-     (セキュリティ制限)。file:// で開いた場合は失敗するが、
-     catch で握り潰してアプリは通常通り動作する。
+   ①  PWA — Service Worker（Blob URL でインライン登録）
 ================================================================ */
-
-/** Service Worker のコード本体（文字列として定義し Blob 化する） */
-const SW_SOURCE = /* js */`
+const SW_SOURCE = `
 const CACHE = 'fuelog-v2';
 
-/* インストール: このページ自体をキャッシュに追加 */
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(c =>
       fetch(self.registration.scope)
         .then(r => r.ok ? c.put(self.registration.scope, r) : null)
-        .catch(() => {/* オフライン初回インストール時は無視 */})
+        .catch(() => {})
     ).then(() => self.skipWaiting())
   );
 });
 
-/* アクティベート: 古いバージョンのキャッシュを削除 */
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
@@ -620,15 +724,8 @@ self.addEventListener('activate', e => {
   );
 });
 
-/*
-  フェッチ: Stale-While-Revalidate 戦略
-  - キャッシュがあれば即座に返す（高速）
-  - バックグラウンドでネットワークから最新を取得してキャッシュ更新
-  - ネットワーク不通のときはキャッシュだけで動く（オフライン対応）
-*/
 self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return; /* POST などは対象外 */
-
+  if (e.request.method !== 'GET') return;
   e.respondWith(
     caches.open(CACHE).then(cache =>
       cache.match(e.request).then(cached => {
@@ -636,193 +733,127 @@ self.addEventListener('fetch', e => {
           if (res && res.ok) cache.put(e.request, res.clone());
           return res;
         }).catch(() => null);
-        return cached || fresh; /* キャッシュ優先、なければネットワーク */
+        return cached || fresh;
       })
     )
   );
 });
 `;
 
-/** Service Worker を Blob URL で登録する */
 async function registerSW() {
   if (!('serviceWorker' in navigator)) return;
   try {
     const blob = new Blob([SW_SOURCE], { type: 'application/javascript' });
-    const url  = URL.createObjectURL(blob);
-    const reg  = await navigator.serviceWorker.register(url, { scope: './' });
-    console.info('[SW] 登録成功:', reg.scope);
+    const reg  = await navigator.serviceWorker.register(URL.createObjectURL(blob), { scope: './' });
+    console.info('[SW] 登録:', reg.scope);
   } catch (err) {
-    /* file:// や非 HTTPS では失敗するが、アプリとしては動作継続 */
-    console.warn('[SW] 登録スキップ:', err.message);
+    console.warn('[SW] スキップ:', err.message);
   }
 }
 
 /* ================================================================
-   ②  PWA — Web App Manifest をインライン Blob で注入
-   ================================================================
-   manifest.json は外部ファイルが必要だが、
-   JSON を Blob 化して <link rel="manifest"> に指定することで
-   1 ファイルのまま対応できる。
-   iOS Safari は manifest を読まないため、
-   <meta> タグ（HTML 側に記述済み）で代替する。
+   ②  PWA — Manifest インライン注入
 ================================================================ */
 function injectManifest() {
   const m = {
-    name: '燃費ログ',
-    short_name: '燃費ログ',
+    name: '燃費ログ', short_name: '燃費ログ',
     description: '給油記録・燃費管理アプリ',
-    start_url: './',
-    display: 'standalone',
-    background_color: '#0d0f14',
-    theme_color: '#0d0f14',
-    lang: 'ja',
+    start_url: './', display: 'standalone',
+    background_color: '#0d0f14', theme_color: '#0d0f14', lang: 'ja',
     icons: [{
-      /* SVG データ URL でアイコンを埋め込み（外部ファイル不要） */
       src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230d0f14'/%3E%3Ctext y='.9em' x='50%25' text-anchor='middle' font-size='72'%3E%E2%9B%BD%3C/text%3E%3C/svg%3E",
-      sizes: 'any',
-      type: 'image/svg+xml',
-      purpose: 'any maskable'
+      sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable'
     }]
   };
   const link = document.createElement('link');
-  link.rel   = 'manifest';
-  link.href  = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: 'application/manifest+json' }));
+  link.rel  = 'manifest';
+  link.href = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: 'application/manifest+json' }));
   document.head.appendChild(link);
 }
 
 /* ================================================================
    ③  IndexedDB ラッパー（Promise ベース）
-   ================================================================
-   IndexedDB はイベント駆動で扱いにくいため、
-   全操作を Promise に包んで async/await で使えるようにする。
 
    DB 設計:
-     名前:    FuelogDB
-     バージョン: 2
+     名前:    FuelogDB  / バージョン: 2
      ストア:  'records'
-       keyPath: 'id'  （= Date.now() で発行する数値）
-       インデックス: 'by_date'（日付でソートする用）
+       keyPath: 'id'（= Date.now() の数値）
+       index:   'by_date'（日付降順ソート用）
 ================================================================ */
-const IDB_NAME    = 'FuelogDB';
-const IDB_VER     = 2;          /* バージョンを上げると onupgradeneeded が走る */
-const STORE       = 'records';
+const IDB_NAME = 'FuelogDB';
+const IDB_VER  = 2;
+const STORE    = 'records';
+let _db = null;
 
-let _db = null; /* 開いた DB インスタンスをキャッシュ */
-
-/**
- * DB を開く。初回は onupgradeneeded でスキーマを作成。
- * 2 回目以降はキャッシュを返す。
- * @returns {Promise<IDBDatabase>}
- */
+/** DB を開く（キャッシュ済みなら再利用） */
 function openDB() {
   if (_db) return Promise.resolve(_db);
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(IDB_NAME, IDB_VER);
 
-    /*
-      onupgradeneeded:
-      DB が存在しない（初回）または version が上がったときに呼ばれる。
-      ここでオブジェクトストアやインデックスを定義する。
-    */
     req.onupgradeneeded = ev => {
-      const db      = ev.target.result;
-      const oldVer  = ev.oldVersion;
-
-      /* version 0 → 1: ストア新規作成 */
-      if (oldVer < 1) {
-        const store = db.createObjectStore(STORE, { keyPath: 'id' });
-        /* 日付フィールドにインデックスを張り、ソート検索を高速化 */
-        store.createIndex('by_date', 'date', { unique: false });
+      const db = ev.target.result;
+      if (!db.objectStoreNames.contains(STORE)) {
+        const s = db.createObjectStore(STORE, { keyPath: 'id' });
+        s.createIndex('by_date', 'date', { unique: false });
       }
-      /* version 1 → 2: 必要に応じて追加マイグレーション（将来用） */
-      /* if (oldVer < 2) { ... } */
     };
 
     req.onsuccess = ev => {
       _db = ev.target.result;
-      /* 他タブで DB がアップグレードされたとき */
       _db.onversionchange = () => { _db.close(); _db = null; };
       resolve(_db);
     };
 
-    req.onerror = ev => reject(ev.target.error);
-
-    /* Safari などで IndexedDB がブロックされたとき */
+    req.onerror   = ev => reject(ev.target.error);
     req.onblocked = () => reject(new Error('IndexedDB がブロックされています。他のタブを閉じてください。'));
   });
 }
 
-/**
- * 全レコードを日付降順（新しい順）で取得する。
- * IDBIndex を使って date の降順カーソルを走査する。
- * @returns {Promise<Array>}
- */
+/** 全レコードを日付降順（新しい順）で取得 */
 function getAllRecords() {
   return openDB().then(db => new Promise((resolve, reject) => {
     const tx      = db.transaction(STORE, 'readonly');
     const index   = tx.objectStore(STORE).index('by_date');
     const results = [];
-
-    /*
-      openCursor(range, direction):
-      'prev' を指定すると降順（最新 → 古い）で走査できる
-    */
-    const req = index.openCursor(null, 'prev');
+    const req     = index.openCursor(null, 'prev'); /* 'prev' = 降順 */
     req.onsuccess = ev => {
-      const cursor = ev.target.result;
-      if (cursor) {
-        results.push(cursor.value);
-        cursor.continue(); /* 次のレコードへ */
-      } else {
-        resolve(results); /* 全件走査完了 */
-      }
+      const c = ev.target.result;
+      if (c) { results.push(c.value); c.continue(); }
+      else resolve(results);
     };
     req.onerror = () => reject(req.error);
   }));
 }
 
-/**
- * レコードを 1 件追加する。
- * @param {Object} record - { id, date, km, liter, eff }
- * @returns {Promise<void>}
- */
+/** レコードを 1 件追加 */
 function dbAdd(record) {
   return openDB().then(db => new Promise((resolve, reject) => {
-    const tx  = db.transaction(STORE, 'readwrite');
-    const req = tx.objectStore(STORE).add(record);
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).add(record);
     tx.oncomplete = () => resolve();
     tx.onerror    = () => reject(tx.error);
   }));
 }
 
-/**
- * レコードを 1 件削除する。
- * @param {number} id - keyPath の値
- * @returns {Promise<void>}
- */
+/** レコードを 1 件削除 */
 function dbDelete(id) {
   return openDB().then(db => new Promise((resolve, reject) => {
-    const tx  = db.transaction(STORE, 'readwrite');
-    const req = tx.objectStore(STORE).delete(id);
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).delete(id);
     tx.oncomplete = () => resolve();
     tx.onerror    = () => reject(tx.error);
   }));
 }
 
 /**
- * 複数レコードを 1 トランザクションで一括追加する（移行用）。
- * アトミック操作なので、途中で失敗した場合はすべてロールバックされる。
- * @param {Array} records
- * @returns {Promise<void>}
+ * 全レコードを一括書き込み（アトミック操作）
+ * put = 同一 id があれば上書き、なければ追加 → 冪等
  */
 function dbBulkPut(records) {
   return openDB().then(db => new Promise((resolve, reject) => {
     const tx    = db.transaction(STORE, 'readwrite');
     const store = tx.objectStore(STORE);
-    /*
-      put = 同一 id が存在すれば上書き、なければ追加。
-      add と違い冪等なので移行の重複実行に安全。
-    */
     records.forEach(r => store.put(r));
     tx.oncomplete = () => resolve();
     tx.onerror    = () => reject(tx.error);
@@ -830,82 +861,356 @@ function dbBulkPut(records) {
   }));
 }
 
-/* ================================================================
-   ④  localStorage → IndexedDB データ移行
-   ================================================================
-   旧バージョンでは fuelRecords キーに JSON 配列を保存していた。
-   このデータを IndexedDB へ移行し、移行済みフラグを立てる。
+/**
+ * ストアを全クリアしてから records を一括書き込み
+ * 復元時に使う（既存データを完全に置き換える）
+ */
+function dbClearAndPut(records) {
+  return openDB().then(db => new Promise((resolve, reject) => {
+    const tx    = db.transaction(STORE, 'readwrite');
+    const store = tx.objectStore(STORE);
+    store.clear(); /* 全削除 */
+    records.forEach(r => store.put(r)); /* 新データを一括追加 */
+    tx.oncomplete = () => resolve();
+    tx.onerror    = () => reject(tx.error);
+    tx.onabort    = () => reject(tx.error ?? new Error('transaction aborted'));
+  }));
+}
 
-   フラグ管理:
-     localStorage の 'idb_migrated' が '1' なら移行済みとみなし
-     二重移行を防ぐ。
-     フラグ自体は localStorage に残すが、データ本体は
-     移行完了後も一定期間は安全のため保持する。
-     （削除したい場合は REMOVE_LS_AFTER_MIGRATION を true に）
+/* ================================================================
+   ④  localStorage → IndexedDB データ移行（初回のみ）
 ================================================================ */
 const LS_DATA_KEY     = 'fuelRecords';
 const LS_MIGRATED_KEY = 'idb_migrated';
-const REMOVE_LS_AFTER_MIGRATION = false; /* true にすると移行後に旧データを消す */
 
-/**
- * 移行処理。
- * @returns {Promise<number>} 移行件数（0 なら移行なし）
- */
 async function migrateFromLS() {
-  /* 移行済みなら即 return */
   if (localStorage.getItem(LS_MIGRATED_KEY) === '1') return 0;
-
   const raw = localStorage.getItem(LS_DATA_KEY);
-
-  /* 旧データなし → フラグだけ立てて終了 */
-  if (!raw) {
-    localStorage.setItem(LS_MIGRATED_KEY, '1');
-    return 0;
-  }
-
+  if (!raw) { localStorage.setItem(LS_MIGRATED_KEY, '1'); return 0; }
   let old;
-  try {
-    old = JSON.parse(raw);
-  } catch {
-    /* 壊れたデータは無視 */
-    localStorage.setItem(LS_MIGRATED_KEY, '1');
-    return 0;
-  }
-
-  if (!Array.isArray(old) || old.length === 0) {
-    localStorage.setItem(LS_MIGRATED_KEY, '1');
-    return 0;
-  }
-
-  /* IndexedDB へ一括書き込み（失敗すれば例外が上位へ伝播） */
+  try { old = JSON.parse(raw); } catch { localStorage.setItem(LS_MIGRATED_KEY, '1'); return 0; }
+  if (!Array.isArray(old) || old.length === 0) { localStorage.setItem(LS_MIGRATED_KEY, '1'); return 0; }
   await dbBulkPut(old);
-
-  /* 移行完了フラグ */
   localStorage.setItem(LS_MIGRATED_KEY, '1');
-
-  if (REMOVE_LS_AFTER_MIGRATION) {
-    localStorage.removeItem(LS_DATA_KEY);
-  }
-
   return old.length;
 }
 
 /* ================================================================
-   ⑤  PWA — インストールバナー制御
+   ⑤  バックアップ / 復元
    ================================================================
-   Chrome / Edge などは beforeinstallprompt イベントで
-   「インストール可能」を通知してくる。
-   デフォルト UI を抑制してカスタムバナーを表示し、
-   ユーザーが「追加」を押したときに prompt() を呼ぶ。
+
+   【バックアップ形式（JSON スキーマ）】
+   {
+     "app": "FuelogDB",          // アプリ識別子（復元時にバリデーション）
+     "version": 1,               // バックアップフォーマットバージョン
+     "exportedAt": "2024-01-15T10:30:00.000Z",  // エクスポート日時（ISO 8601）
+     "count": 12,                // レコード件数
+     "records": [ { id, date, km, liter, eff }, ... ]
+   }
+
+   【iPhone 対応】
+   - iOS Safari は <a download> 属性を無視してリンク先をナビゲートする。
+     そのため、data: URL を window.open() で新タブに開き、
+     ユーザーが手動で「ファイルに保存」できるよう案内文を表示する。
+   - iOS 判定: navigator.userAgent に 'iPhone' または 'iPad' が含まれるかで判断。
+   - 復元（インポート）は <input type="file"> を使うため、
+     iPhone でも問題なく動作する。
+================================================================ */
+
+/** iPhone / iPad を判定する */
+const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+/**
+ * バックアップを実行する
+ *
+ * 処理の流れ:
+ *   1. IndexedDB から全レコードを取得
+ *   2. メタ情報を付けて JSON 化
+ *   3. iOS なら data: URL を新タブで開く
+ *      非 iOS は <a download> でファイル保存
+ *   4. 最終バックアップ日時を localStorage に記録
+ */
+async function handleBackup() {
+  try {
+    const records = await getAllRecords();
+
+    if (records.length === 0) {
+      toast('⚠ 記録がないためバックアップできません');
+      return;
+    }
+
+    /* バックアップ JSON を構築 */
+    const now        = new Date();
+    const backupData = {
+      app:        'FuelogDB',           /* アプリ識別子 */
+      version:    1,                    /* フォーマットバージョン */
+      exportedAt: now.toISOString(),    /* エクスポート日時 */
+      count:      records.length,
+      records:    records
+    };
+
+    const json     = JSON.stringify(backupData, null, 2); /* 2 スペースインデントで読みやすく */
+    const fileName = `fuelog_backup_${now.toISOString().slice(0,10)}.json`; /* 例: fuelog_backup_2024-01-15.json */
+
+    if (IS_IOS) {
+      /*
+        iPhone / iPad:
+        <a download> は機能しないため、data: URI の JSON を
+        新タブで開く。ユーザーは iOS の共有メニューから
+        「ファイルに保存」でローカルに保存できる。
+      */
+      const dataUrl = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
+      const win = window.open(dataUrl, '_blank');
+      if (!win) {
+        /*
+          ポップアップブロックされた場合は clipboard にコピーして案内
+          （PWA モードではポップアップが制限されることがある）
+        */
+        try {
+          await navigator.clipboard.writeText(json);
+          toast('📋 JSON をクリップボードにコピーしました');
+        } catch {
+          alert('バックアップ JSON:\n\n' + json.slice(0, 500) + '\n...(長いため省略)');
+        }
+        return;
+      }
+    } else {
+      /*
+        Android / PC:
+        Blob URL を <a download> で開いてファイルとして保存する。
+        Blob URL は使用後すぐに revoke して メモリリークを防ぐ。
+      */
+      const blob    = new Blob([json], { type: 'application/json' });
+      const url     = URL.createObjectURL(blob);
+      const anchor  = document.createElement('a');
+      anchor.href     = url;
+      anchor.download = fileName;
+      anchor.style.display = 'none';
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      /* 少し待ってから revoke（すぐに消すとブラウザがダウンロードをキャンセルすることがある） */
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    /* 最終バックアップ日時を保存して UI 更新 */
+    localStorage.setItem('lastBackupAt', now.toISOString());
+    updateBackupMeta();
+    toast(`💾 ${records.length} 件をバックアップしました`);
+
+  } catch (err) {
+    alert('バックアップに失敗しました: ' + err.message);
+  }
+}
+
+/**
+ * 最終バックアップ日時を UI に表示する
+ */
+function updateBackupMeta() {
+  const raw = localStorage.getItem('lastBackupAt');
+  const el  = document.getElementById('backupMeta');
+  if (!raw) {
+    el.textContent = '最終バックアップ: なし';
+    return;
+  }
+  const d = new Date(raw);
+  /* 'YYYY/MM/DD HH:MM' 形式で表示 */
+  const str = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} `
+            + `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  el.textContent = `最終バックアップ: ${str}`;
+}
+
+/* ================================================================
+   復元（インポート）処理
+   ================================================================
+   インポートは 3 ステップで行う:
+     Step1: btnRestoreOpen → fileInput.click() → ファイルピッカーを開く
+     Step2: fileInput change → JSON を読み込んでバリデーション
+                             → 確認ダイアログを表示
+     Step3: execRestore()  → DB をクリアして新データを書き込む
+================================================================ */
+
+/** Step2 で読み込んだ JSON データを一時保持 */
+let _pendingRestoreData = null;
+
+/**
+ * Step1: 復元ボタンを押したとき
+ * 非表示の <input type="file"> を click() してファイルピッカーを開く。
+ * iPhone でも <input type="file"> は動作する。
+ */
+function handleRestoreOpen() {
+  /* 同じファイルを再選択できるよう value をリセット */
+  const input = document.getElementById('fileInput');
+  input.value = '';
+  input.click();
+}
+
+/**
+ * Step2: ファイルが選択されたとき
+ * FileReader で JSON テキストを読み込み、バリデーション後に確認ダイアログを開く。
+ */
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  /* ファイルサイズ上限: 10MB（異常に大きなファイルを弾く） */
+  if (file.size > 10 * 1024 * 1024) {
+    alert('ファイルサイズが大きすぎます（10MB 以下にしてください）');
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = ev => {
+    let parsed;
+
+    /* JSON パース */
+    try {
+      parsed = JSON.parse(ev.target.result);
+    } catch {
+      alert('JSON の解析に失敗しました。\n正しいバックアップファイルを選択してください。');
+      return;
+    }
+
+    /* ================================================================
+       バリデーション
+       ================================================================
+       バックアップファイルが正しい形式かを検証する。
+       不正なファイルで DB が破壊されるのを防ぐ。
+    ================================================================ */
+    const err = validateBackupJson(parsed);
+    if (err) {
+      alert('バックアップファイルが不正です:\n' + err);
+      return;
+    }
+
+    /* バリデーション通過 → 一時保存して確認ダイアログを表示 */
+    _pendingRestoreData = parsed;
+    openRestoreDialog(parsed);
+  };
+
+  reader.onerror = () => {
+    alert('ファイルの読み込みに失敗しました。');
+  };
+
+  /* テキストとして読み込む（JSON は UTF-8 テキスト） */
+  reader.readAsText(file, 'UTF-8');
+}
+
+/**
+ * バックアップ JSON のバリデーション
+ *
+ * チェック内容:
+ *   - app フィールドが 'FuelogDB' であること
+ *   - version フィールドが存在すること
+ *   - records が配列であること
+ *   - 各レコードに必須フィールドがあること
+ *
+ * @param {any} data - パース済み JSON
+ * @returns {string|null} エラーメッセージ（問題なければ null）
+ */
+function validateBackupJson(data) {
+  if (typeof data !== 'object' || data === null) {
+    return 'JSONがオブジェクト形式ではありません';
+  }
+  if (data.app !== 'FuelogDB') {
+    return '燃費ログのバックアップファイルではありません（app フィールドが一致しません）';
+  }
+  if (typeof data.version !== 'number') {
+    return 'version フィールドが見つかりません';
+  }
+  if (!Array.isArray(data.records)) {
+    return 'records フィールドが配列ではありません';
+  }
+
+  /* 各レコードの必須フィールドチェック（最初の 10 件だけサンプル検証） */
+  const sample = data.records.slice(0, 10);
+  for (const r of sample) {
+    if (typeof r.id    !== 'number') return `レコードに id (number) がありません`;
+    if (typeof r.date  !== 'string') return `レコードに date (string) がありません`;
+    if (typeof r.km    !== 'number') return `レコードに km (number) がありません`;
+    if (typeof r.liter !== 'number') return `レコードに liter (number) がありません`;
+    /* eff は文字列または '--' */
+    if (r.eff !== undefined && typeof r.eff !== 'string') return `レコードの eff が不正です`;
+  }
+
+  return null; /* 検証通過 */
+}
+
+/**
+ * Step2 の最後: 復元確認ダイアログを開く
+ * @param {Object} data - バリデーション済みバックアップ JSON
+ */
+function openRestoreDialog(data) {
+  /* ダイアログに詳細情報を表示 */
+  const exportedAt = data.exportedAt
+    ? new Date(data.exportedAt).toLocaleString('ja-JP')
+    : '不明';
+
+  document.getElementById('dlgRestoreTarget').innerHTML =
+    `📁 <strong>${data.records.length} 件</strong> のレコード<br>` +
+    `🕐 バックアップ日時: <strong>${exportedAt}</strong><br>` +
+    `⚠ 現在の <strong>${'?'} 件</strong> のデータは上書きされます`;
+
+  /* 現在の件数を非同期で更新 */
+  getAllRecords().then(recs => {
+    document.getElementById('dlgRestoreTarget').innerHTML =
+      `📁 <strong>${data.records.length} 件</strong> のレコードを復元<br>` +
+      `🕐 バックアップ日時: <strong>${exportedAt}</strong><br>` +
+      `⚠ 現在の <strong>${recs.length} 件</strong> のデータは上書きされます`;
+  }).catch(() => {});
+
+  document.getElementById('overlayRestore').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+/** 復元ダイアログを閉じる */
+function closeRestoreDialog() {
+  _pendingRestoreData = null;
+  document.getElementById('overlayRestore').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+/**
+ * Step3: 復元実行
+ * DB を全クリアして新データを書き込み、画面を再描画する
+ */
+async function execRestore() {
+  if (!_pendingRestoreData) return;
+  const data = _pendingRestoreData;
+  closeRestoreDialog();
+
+  try {
+    /*
+      eff フィールドが欠けているレコードは再計算して補完する
+      （古いバージョンのバックアップとの互換性確保）
+    */
+    const records = data.records.map(r => ({
+      ...r,
+      eff: r.eff || fuelEff(r.km, r.liter)
+    }));
+
+    /* 既存データを全削除 → 新データを一括書き込み（1 トランザクション） */
+    await dbClearAndPut(records);
+
+    /* 画面を再描画 */
+    await render();
+
+    toast(`📂 ${records.length} 件を復元しました`, 'warn');
+  } catch (err) {
+    alert('復元に失敗しました: ' + err.message);
+  }
+}
+
+/* ================================================================
+   ⑥  PWA インストールバナー制御
 ================================================================ */
 let _installPrompt = null;
 
 function initInstallBanner() {
   window.addEventListener('beforeinstallprompt', e => {
-    e.preventDefault(); /* ブラウザデフォルト UI を抑制 */
+    e.preventDefault();
     _installPrompt = e;
-
-    /* バナー非表示を選んでいなければ表示 */
     if (!localStorage.getItem('pwa_dismissed')) {
       document.getElementById('bannerPwa').classList.add('visible');
     }
@@ -932,11 +1237,7 @@ function initInstallBanner() {
 }
 
 /* ================================================================
-   ⑥  ネットワーク状態監視
-   ================================================================
-   オンライン / オフラインの切り替えを検知し、
-   ステータスバーを表示 / 非表示にする。
-   IndexedDB にデータが入っているのでオフラインでも読み書き可能。
+   ⑦  ネットワーク状態監視
 ================================================================ */
 function initNetworkWatch() {
   const bar = document.getElementById('networkBar');
@@ -961,10 +1262,10 @@ function initNetworkWatch() {
 }
 
 /* ================================================================
-   ⑦  ユーティリティ
+   ⑧  ユーティリティ
 ================================================================ */
 
-/** 燃費 km/L を計算する */
+/** 燃費計算（km/L）*/
 function fuelEff(km, liter) {
   if (!km || !liter || liter <= 0) return '--';
   return (km / liter).toFixed(1);
@@ -982,31 +1283,21 @@ function shortDate(s) {
   return `${+m}/${+d}`;
 }
 
-/** トースト通知を表示する */
+/** トースト通知
+ * @param {string} msg  - 表示テキスト
+ * @param {string} type - '' (緑) | 'warn' (オレンジ)
+ */
 let _toastTimer;
-function toast(msg) {
+function toast(msg, type = '') {
   const el = document.getElementById('toast');
   el.textContent = msg;
-  el.classList.add('show');
+  el.className   = 'show' + (type ? ' ' + type : '');
   clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+  _toastTimer = setTimeout(() => { el.className = ''; }, 2600);
 }
 
 /* ================================================================
-   ⑧  燃費推移グラフ（SVG 直接生成）
-   ================================================================
-   Chart.js などの外部ライブラリを使わず、
-   SVG タグを文字列として組み立てて DOM に挿入する。
-   グラフ構成要素:
-     1. linearGradient  - エリア塗りつぶし用グラデーション定義
-     2. filter          - データ点のグロー（光彩）エフェクト
-     3. グリッド線       - 水平の点線 + Y 軸ラベル
-     4. エリア塗り       - 折れ線下のグラデーション
-     5. 折れ線          - polyline で燃費推移を描く
-     6. データ点        - 各記録の丸点（グロー付き）
-     7. 燃費ラベル       - 各点の上下に km/L 値を表示
-     8. X 軸ラベル      - 月/日 の日付
-     9. 平均線          - 全記録の平均燃費を破線で表示
+   ⑨  グラフ描画（純 SVG）
 ================================================================ */
 function drawGraph(records) {
   const scroll  = document.getElementById('graphScroll');
@@ -1020,75 +1311,54 @@ function drawGraph(records) {
   }
   emptyEl.style.display = 'none';
 
-  /* 古い順に並べ替え（records は新しい順） */
-  const pts    = records.slice().reverse();
-  const effs   = pts.map(r => parseFloat(r.eff));
+  const pts  = records.slice().reverse();       /* 古い順 */
+  const effs = pts.map(r => parseFloat(r.eff));
 
-  /* Y 軸レンジ（上下に 30% 余白を加える） */
+  /* Y 軸レンジ */
   const eMin = Math.min(...effs), eMax = Math.max(...effs);
   const pad  = (eMax - eMin) * 0.3 || 2;
   const yMin = Math.max(0, eMin - pad), yMax = eMax + pad;
 
   /* レイアウト定数 */
   const PL = 46, PR = 18, PT = 26, PB = 36, GAP = 64, H = 180;
-  const cw  = scroll.clientWidth || 300;
+  const cw   = scroll.clientWidth || 300;
   const svgW = Math.max(cw, pts.length * GAP + PL + PR);
   const svgH = H + PT + PB;
   const dW   = svgW - PL - PR;
 
-  /* 座標変換 */
-  const X = i => PL + (dW / (pts.length - 1)) * i;          /* X: 均等割り */
-  const Y = v => PT + H - ((v - yMin) / (yMax - yMin)) * H; /* Y: 上が高い */
+  const X = i => PL + (dW / (pts.length - 1)) * i;
+  const Y = v => PT + H - ((v - yMin) / (yMax - yMin)) * H;
 
-  /* polyline の点列 */
-  const pointsStr = pts.map((r, i) => `${X(i).toFixed(1)},${Y(+r.eff).toFixed(1)}`).join(' ');
-
-  /* エリア塗りつぶし用パス（折れ線 + X 軸でクローズ） */
-  const areaPath = `M ${X(0).toFixed(1)},${(PT+H).toFixed(1)} L ${pointsStr} L ${X(pts.length-1).toFixed(1)},${(PT+H).toFixed(1)} Z`;
-
-  /* Y 軸グリッド線（5 本） */
-  const grid = Array.from({ length: 5 }, (_, i) => {
+  const ptStr   = pts.map((r, i) => `${X(i).toFixed(1)},${Y(+r.eff).toFixed(1)}`).join(' ');
+  const areaD   = `M ${X(0).toFixed(1)},${(PT+H).toFixed(1)} L ${ptStr} L ${X(pts.length-1).toFixed(1)},${(PT+H).toFixed(1)} Z`;
+  const grid    = Array.from({ length: 5 }, (_, i) => {
     const v = yMin + (yMax - yMin) * (i / 4);
     return { y: Y(v).toFixed(1), label: v.toFixed(1) };
   });
-
-  /* 平均燃費 */
   const avg  = effs.reduce((s, v) => s + v, 0) / effs.length;
   const avgY = Y(avg).toFixed(1);
 
-  /* SVG 文字列を構築 */
   const svg = `<svg width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}"
     xmlns="http://www.w3.org/2000/svg" role="img" aria-label="燃費推移グラフ">
     <defs>
-      <!-- エリア塗りつぶし: 上から下へ透明になるグラデーション -->
       <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%"   stop-color="#3ddc84" stop-opacity=".26"/>
         <stop offset="100%" stop-color="#3ddc84" stop-opacity=".02"/>
       </linearGradient>
-      <!-- データ点グロー: ガウスぼかし + 元レイヤーを重ねる -->
       <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
         <feGaussianBlur stdDeviation="2.8" result="b"/>
         <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
       </filter>
     </defs>
-
-    <!-- ① グリッド線 + Y 軸ラベル -->
     ${grid.map(g => `
       <line x1="${PL}" y1="${g.y}" x2="${svgW-PR}" y2="${g.y}"
         stroke="#2a3347" stroke-width="1" stroke-dasharray="4 4"/>
       <text x="${PL-6}" y="${g.y}" text-anchor="end" dominant-baseline="middle"
         font-family="DM Mono,monospace" font-size="9" fill="#7a8ba0">${g.label}</text>
     `).join('')}
-
-    <!-- ② エリア塗りつぶし -->
-    <path d="${areaPath}" fill="url(#ag)"/>
-
-    <!-- ③ 折れ線 -->
-    <polyline points="${pointsStr}"
-      fill="none" stroke="#3ddc84" stroke-width="2.5"
+    <path d="${areaD}" fill="url(#ag)"/>
+    <polyline points="${ptStr}" fill="none" stroke="#3ddc84" stroke-width="2.5"
       stroke-linecap="round" stroke-linejoin="round"/>
-
-    <!-- ④ データ点 + ラベル + X 軸日付 -->
     ${pts.map((r, i) => {
       const x    = X(i).toFixed(1);
       const y    = Y(+r.eff).toFixed(1);
@@ -1103,8 +1373,6 @@ function drawGraph(records) {
           font-family="DM Mono,monospace" font-size="10" fill="#7a8ba0">${shortDate(r.date)}</text>
       `;
     }).join('')}
-
-    <!-- ⑤ 平均燃費 破線 -->
     <line x1="${PL}" y1="${avgY}" x2="${svgW-PR}" y2="${avgY}"
       stroke="#2a9960" stroke-width="1" stroke-dasharray="6 3" opacity=".9"/>
     <text x="${svgW-PR-2}" y="${+avgY-4}" text-anchor="end"
@@ -1116,21 +1384,17 @@ function drawGraph(records) {
 }
 
 /* ================================================================
-   ⑨  UI 描画（全体再描画）
-   ================================================================
-   IndexedDB は非同期なので、render() は async 関数にして
-   await で全レコードを取得してから DOM を更新する。
+   ⑩  UI 全体再描画
 ================================================================ */
 async function render() {
   const recs = await getAllRecords();
 
-  /* サマリー更新 */
+  /* サマリー */
   let totKm = 0, totL = 0;
   recs.forEach(r => { totKm += r.km; totL += r.liter; });
-
-  document.getElementById('avgNum').textContent   = fuelEff(totKm, totL);
+  document.getElementById('avgNum').textContent    = fuelEff(totKm, totL);
   document.getElementById('statCount').textContent = recs.length;
-  document.getElementById('statKm').textContent   = totKm.toLocaleString();
+  document.getElementById('statKm').textContent    = totKm.toLocaleString();
   document.getElementById('statLiter').textContent = totL.toFixed(1);
   document.getElementById('badgeCount').textContent = `${recs.length} 件`;
 
@@ -1162,17 +1426,17 @@ async function render() {
             <span class="rec-num">${r.liter.toFixed(2)}<span> L</span></span>
           </div>
         </div>
-        <button class="btn-del" onclick="openDialog(${r.id})"
+        <button class="btn-del" onclick="openDeleteDialog(${r.id})"
           aria-label="削除確認" title="この記録を削除">✕</button>
       </div>`).join('')}
   </div>`;
 }
 
 /* ================================================================
-   ⑩  入力フォーム
+   ⑪  入力フォーム
 ================================================================ */
 
-/* リアルタイムプレビュー */
+/** 燃費リアルタイムプレビュー */
 function updatePreview() {
   const km  = parseFloat(document.getElementById('fKm').value);
   const lt  = parseFloat(document.getElementById('fLiter').value);
@@ -1180,15 +1444,15 @@ function updatePreview() {
   document.getElementById('previewVal').textContent = eff === '--' ? '-- km/L' : `${eff} km/L`;
 }
 
-/* 登録ボタン */
+/** 記録を追加する */
 async function handleAdd() {
   const date  = document.getElementById('fDate').value;
   const km    = parseFloat(document.getElementById('fKm').value);
   const liter = parseFloat(document.getElementById('fLiter').value);
 
-  if (!date)            { alert('給油日を入力してください'); return; }
-  if (!km || km <= 0)   { alert('走行距離を正しく入力してください'); return; }
-  if (!liter || liter <= 0) { alert('給油量を正しく入力してください'); return; }
+  if (!date)               { alert('給油日を入力してください'); return; }
+  if (!km    || km    <= 0){ alert('走行距離を正しく入力してください'); return; }
+  if (!liter || liter <= 0){ alert('給油量を正しく入力してください'); return; }
 
   const rec = { id: Date.now(), date, km, liter, eff: fuelEff(km, liter) };
 
@@ -1205,42 +1469,40 @@ async function handleAdd() {
 }
 
 /* ================================================================
-   ⑪  削除確認ダイアログ
+   ⑫  削除確認ダイアログ
 ================================================================ */
-let _pendingId = null;
+let _pendingDeleteId = null;
 
-async function openDialog(id) {
-  _pendingId = id;
+async function openDeleteDialog(id) {
+  _pendingDeleteId = id;
 
-  /* 対象データをダイアログに表示 */
   try {
     const recs   = await getAllRecords();
     const target = recs.find(r => r.id === id);
     if (target) {
-      document.getElementById('dlgTarget').innerHTML =
+      document.getElementById('dlgDelTarget').innerHTML =
         `📅 <strong>${fmtDate(target.date)}</strong><br>` +
         `🛣 ${target.km.toLocaleString()} km ／ 🪣 ${target.liter.toFixed(2)} L<br>` +
         `⚡ 燃費 ${target.eff} km/L`;
     }
-  } catch { /* 取得失敗でもダイアログは開く */ }
+  } catch { /* 失敗してもダイアログは開く */ }
 
-  document.getElementById('overlay').classList.add('open');
+  document.getElementById('overlayDelete').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 
-function closeDialog() {
-  _pendingId = null;
-  document.getElementById('overlay').classList.remove('open');
+function closeDeleteDialog() {
+  _pendingDeleteId = null;
+  document.getElementById('overlayDelete').classList.remove('open');
   document.body.style.overflow = '';
 }
 
 async function execDelete() {
-  if (_pendingId === null) return;
-  const id = _pendingId;
-  closeDialog();
+  if (_pendingDeleteId === null) return;
+  const id = _pendingDeleteId;
+  closeDeleteDialog();
 
-  /* アニメーション → 削除 → 再描画 */
-  const el = document.querySelector(`[data-id="${id}"]`);
+  const el       = document.querySelector(`[data-id="${id}"]`);
   const doDelete = async () => {
     try {
       await dbDelete(id);
@@ -1259,13 +1521,18 @@ async function execDelete() {
   }
 }
 
-/* オーバーレイ外タップでキャンセル */
-document.getElementById('overlay').addEventListener('click', function(e) {
-  if (e.target === this) closeDialog();
+/* オーバーレイ外タップでキャンセル（削除） */
+document.getElementById('overlayDelete').addEventListener('click', function(e) {
+  if (e.target === this) closeDeleteDialog();
+});
+
+/* オーバーレイ外タップでキャンセル（復元） */
+document.getElementById('overlayRestore').addEventListener('click', function(e) {
+  if (e.target === this) closeRestoreDialog();
 });
 
 /* ================================================================
-   ⑫  リサイズ時グラフ再描画（デバウンス付き）
+   ⑬  リサイズ時グラフ再描画（デバウンス）
 ================================================================ */
 let _resizeTimer;
 window.addEventListener('resize', () => {
@@ -1274,16 +1541,7 @@ window.addEventListener('resize', () => {
 });
 
 /* ================================================================
-   ⑬  アプリ初期化（起動シーケンス）
-   ================================================================
-   起動時に行う処理を順番通りに実行する:
-   1. PWA 系（manifest 注入・SW 登録・インストールバナー）
-   2. ネットワーク監視
-   3. IndexedDB オープン
-   4. localStorage → IndexedDB データ移行
-   5. フォームの今日日付セット + イベント登録
-   6. 初期描画
-   7. ローディング画面フェードアウト
+   ⑭  アプリ初期化
 ================================================================ */
 async function initApp() {
   const splashMsg = document.getElementById('splashMsg');
@@ -1291,19 +1549,18 @@ async function initApp() {
   try {
     /* --- PWA 系 --- */
     injectManifest();
-    registerSW();            /* await しない（失敗しても続行） */
+    registerSW();
     initInstallBanner();
     initNetworkWatch();
 
-    /* --- DB を開く --- */
+    /* --- IndexedDB を開く --- */
     splashMsg.textContent = 'データベースを開いています...';
     await openDB();
 
-    /* --- データ移行 --- */
+    /* --- localStorage からデータ移行 --- */
     splashMsg.textContent = '既存データを確認中...';
     const migCount = await migrateFromLS();
     if (migCount > 0) {
-      /* 移行バナーを表示して 6 秒後に消す */
       const b = document.getElementById('bannerMigration');
       b.querySelector('strong').textContent = `✅ ${migCount} 件のデータを移行しました`;
       b.classList.add('visible');
@@ -1318,22 +1575,34 @@ async function initApp() {
     document.getElementById('btnAdd').disabled    = false;
     document.getElementById('btnAdd').textContent = '＋ 記録する';
 
+    /* --- バックアップ / 復元 UI 初期化 --- */
+    document.getElementById('btnBackup').addEventListener('click', handleBackup);
+    document.getElementById('btnRestoreOpen').addEventListener('click', handleRestoreOpen);
+    document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+
+    /* iPhone ヒント表示 */
+    if (IS_IOS) {
+      document.getElementById('iosHint').classList.add('visible');
+    }
+
+    /* 最終バックアップ日時を表示 */
+    updateBackupMeta();
+
     /* --- 初期描画 --- */
     splashMsg.textContent = 'データを読み込み中...';
     await render();
 
   } catch (err) {
-    /* DB 異常時はエラーバナーを表示してスプラッシュを消す */
     console.error('[initApp]', err);
     const eb = document.getElementById('bannerError');
     document.getElementById('bannerErrorMsg').textContent = err.message;
     eb.classList.add('visible');
   }
 
-  /* --- ローディング画面をフェードアウト --- */
+  /* スプラッシュをフェードアウト */
   const splash = document.getElementById('splash');
   splash.classList.add('fade');
-  setTimeout(() => splash.remove(), 400); /* アニメーション後に DOM 削除 */
+  setTimeout(() => splash.remove(), 400);
 }
 
 /* 起動 */
