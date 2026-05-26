@@ -253,11 +253,6 @@
 
     /* ================================================================
        バックアップ / 復元カード
-       ================================================================
-       iPhoneでは <a download> がファイルとして保存されないため、
-       iOS は「ファイルに保存」を案内するインフォメーションを表示する。
-       復元は <input type="file" accept=".json"> を非表示に置き、
-       ボタンタップで click() を呼ぶことでファイルピッカーを開く。
     ================================================================ */
     .backup-card {
       background: var(--surface); border: 1px solid var(--border);
@@ -296,10 +291,6 @@
     .btn-restore:active { background: var(--warn-dim); border-color: var(--warn); color: var(--warn); }
     .btn-restore .btn-icon { font-size: 18px; flex-shrink: 0; }
 
-    /*
-      iPhone ではファイル保存の動作が異なるため案内文を表示する。
-      JS で iOS を検出したときだけ .visible を付ける。
-    */
     .ios-hint {
       display: none;
       background: var(--surface2); border: 1px solid var(--border);
@@ -319,7 +310,7 @@
     /* ================================================================
        履歴セクション
     ================================================================ */
-    .history-section { animation: fadeUp 0.5s ease 0.2s both; }
+    .history-section { animation: fadeUp 0.5s ease 0.2s both; margin-bottom: 24px; }
     .history-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
     .history-hd h2 {
       font-size: 11px; font-weight: 500; color: var(--text-sub);
@@ -357,11 +348,18 @@
     }
     .rec-badge .val  { font-family: var(--mono); font-size: 15px; font-weight: 500; color: var(--accent); line-height: 1.1; }
     .rec-badge .unit { font-family: var(--mono); font-size: 9px; color: var(--text-sub); }
+    
+    /* メンテナンス用の丸バッジ（オレンジ） */
+    .rec-badge.maint { border-color: var(--warn); }
+    .rec-badge.maint .val { color: var(--warn); font-size: 20px; }
+
     .rec-info { flex: 1; min-width: 0; }
     .rec-date { font-size: 12px; color: var(--text-sub); font-family: var(--mono); margin-bottom: 3px; }
-    .rec-nums { display: flex; gap: 11px; }
+    .rec-nums { display: flex; gap: 11px; flex-wrap: wrap; }
     .rec-num  { font-size: 13px; color: var(--text); }
     .rec-num span { color: var(--text-sub); font-size: 11px; }
+    .rec-memo { font-size: 13px; color: var(--text); word-break: break-all; margin-top: 2px; }
+    
     .btn-del {
       flex-shrink: 0; background: transparent; border: 1px solid var(--border);
       border-radius: var(--radius-sm); color: var(--text-sub);
@@ -403,9 +401,6 @@
 
     /* ================================================================
        復元確認ダイアログ
-       ================================================================
-       削除ダイアログと同じ構造だが警告色（オレンジ）で区別する。
-       復元は全データ上書きなので「危険度」が高い操作。
     ================================================================ */
     .dlg-restore {
       background: var(--surface); border: 1px solid var(--border);
@@ -553,7 +548,7 @@
     <div class="sec-title">給油を記録</div>
     <div class="form-grid">
       <div class="field full">
-        <label for="fDate">📅 給油日</label>
+        <label for="fDate">📅 给油日</label>
         <input type="date" id="fDate" />
       </div>
       <div class="field">
@@ -570,6 +565,25 @@
       <span id="previewVal">-- km/L</span>
     </div>
     <button class="btn-add" id="btnAdd" disabled>準備中...</button>
+  </div>
+
+  <div class="form-card" style="border-color: var(--warn-dim);">
+    <div class="sec-title" style="color: var(--warn);">🔧 メンテナンスを記録</div>
+    <div class="form-grid">
+      <div class="field full">
+        <label for="mDate">📅 実施日</label>
+        <input type="date" id="mDate" />
+      </div>
+      <div class="field">
+        <label for="mKm">🛣 走行距離 (km)</label>
+        <input type="number" id="mKm" placeholder="例: 45000" min="0" step="0.1" inputmode="decimal" />
+      </div>
+      <div class="field">
+        <label for="mMemo">📝 メモ・内容</label>
+        <input type="text" id="mMemo" placeholder="例: オイル交換、エレメント" />
+      </div>
+    </div>
+    <button class="btn-add" id="btnMaintAdd" style="background: var(--warn); color: #1a0f00;">＋ メンテナンスを記録する</button>
   </div>
 
   <div class="backup-card">
@@ -603,11 +617,22 @@
     <div class="history-hd">
       <h2>給油履歴</h2>
       <div class="badges">
-        <span class="badge badge-idb" title="IndexedDB 使用中">IDB</span>
+        <span class="badge badge-idb">IDB</span>
         <span class="badge" id="badgeCount">0 件</span>
       </div>
     </div>
     <div id="recList"></div>
+  </div>
+
+  <div class="history-section">
+    <div class="history-hd">
+      <h2 style="color: var(--warn);">メンテナンス履歴</h2>
+      <div class="badges">
+        <span class="badge badge-idb" style="color: var(--warn);">IDB</span>
+        <span class="badge" id="badgeMaintCount">0 件</span>
+      </div>
+    </div>
+    <div id="maintList"></div>
   </div>
 
 </div><div class="overlay" id="overlayDelete">
@@ -646,7 +671,7 @@
    ①  PWA — Service Worker（Blob URL でインライン登録）
 ================================================================ */
 const SW_SOURCE = `
-const CACHE = 'fuelog-v2';
+const CACHE = 'fuelog-v3';
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -715,19 +740,14 @@ function injectManifest() {
 
 /* ================================================================
    ③  IndexedDB ラッパー（Promise ベース）
-
-   DB 設計:
-     名前:    FuelogDB  / バージョン: 2
-     ストア:  'records'
-       keyPath: 'id'（= Date.now() の数値）
-       index:   'by_date'（日付降順ソート用）
+   バージョンを3に変更、メンテナンス用ストアを追加
 ================================================================ */
 const IDB_NAME = 'FuelogDB';
-const IDB_VER  = 2;
+const IDB_VER  = 3;
 const STORE    = 'records';
+const STORE_MAINT = 'maintenance';
 let _db = null;
 
-/** DB を開く（キャッシュ済みなら再利用） */
 function openDB() {
   if (_db) return Promise.resolve(_db);
   return new Promise((resolve, reject) => {
@@ -738,6 +758,10 @@ function openDB() {
       if (!db.objectStoreNames.contains(STORE)) {
         const s = db.createObjectStore(STORE, { keyPath: 'id' });
         s.createIndex('by_date', 'date', { unique: false });
+      }
+      if (!db.objectStoreNames.contains(STORE_MAINT)) {
+        const sM = db.createObjectStore(STORE_MAINT, { keyPath: 'id' });
+        sM.createIndex('by_date', 'date', { unique: false });
       }
     };
 
@@ -752,13 +776,13 @@ function openDB() {
   });
 }
 
-/** 全レコードを日付降順（新しい順）で取得 */
-function getAllRecords() {
+/** 各種ストアから全レコードを降順取得 */
+function getAllRecordsFromStore(storeName) {
   return openDB().then(db => new Promise((resolve, reject) => {
-    const tx      = db.transaction(STORE, 'readonly');
-    const index   = tx.objectStore(STORE).index('by_date');
+    const tx      = db.transaction(storeName, 'readonly');
+    const index   = tx.objectStore(storeName).index('by_date');
     const results = [];
-    const req     = index.openCursor(null, 'prev'); /* 'prev' = 降順 */
+    const req     = index.openCursor(null, 'prev');
     req.onsuccess = ev => {
       const c = ev.target.result;
       if (c) { results.push(c.value); c.continue(); }
@@ -768,30 +792,35 @@ function getAllRecords() {
   }));
 }
 
-/** レコードを 1 件追加 */
-function dbAdd(record) {
+function getAllRecords() { return getAllRecordsFromStore(STORE); }
+function getAllMaintenances() { return getAllRecordsFromStore(STORE_MAINT); }
+
+/** レコードを追加 */
+function dbAddStore(storeName, record) {
   return openDB().then(db => new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite');
-    tx.objectStore(STORE).add(record);
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).add(record);
     tx.oncomplete = () => resolve();
     tx.onerror    = () => reject(tx.error);
   }));
 }
 
-/** レコードを 1 件削除 */
-function dbDelete(id) {
+function dbAdd(record) { return dbAddStore(STORE, record); }
+function dbMaintAdd(record) { return dbAddStore(STORE_MAINT, record); }
+
+/** レコードを削除 */
+function dbDeleteStore(storeName, id) {
   return openDB().then(db => new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite');
-    tx.objectStore(STORE).delete(id);
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).delete(id);
     tx.oncomplete = () => resolve();
     tx.onerror    = () => reject(tx.error);
   }));
 }
 
-/**
- * 全レコードを一括書き込み（アトミック操作）
- * put = 同一 id があれば上書き、なければ追加 → 冪等
- */
+function dbDelete(id) { return dbDeleteStore(STORE, id); }
+function dbMaintDelete(id) { return dbDeleteStore(STORE_MAINT, id); }
+
 function dbBulkPut(records) {
   return openDB().then(db => new Promise((resolve, reject) => {
     const tx    = db.transaction(STORE, 'readwrite');
@@ -799,23 +828,24 @@ function dbBulkPut(records) {
     records.forEach(r => store.put(r));
     tx.oncomplete = () => resolve();
     tx.onerror    = () => reject(tx.error);
-    tx.onabort    = () => reject(tx.error ?? new Error('transaction aborted'));
   }));
 }
 
-/**
- * ストアを全クリアしてから records を一括書き込み
- * 復元時に使う（既存データを完全に置き換える）
- */
-function dbClearAndPut(records) {
+/** 復元用：両ストアを完全クリアして再書き込み */
+function dbClearAndPutAll(records, maintenances) {
   return openDB().then(db => new Promise((resolve, reject) => {
-    const tx    = db.transaction(STORE, 'readwrite');
-    const store = tx.objectStore(STORE);
-    store.clear(); /* 全削除 */
-    records.forEach(r => store.put(r)); /* 新データを一括追加 */
+    const tx = db.transaction([STORE, STORE_MAINT], 'readwrite');
+    
+    const storeFuel = tx.objectStore(STORE);
+    storeFuel.clear();
+    records.forEach(r => storeFuel.put(r));
+
+    const storeMaint = tx.objectStore(STORE_MAINT);
+    storeMaint.clear();
+    maintenances.forEach(m => storeMaint.put(m));
+
     tx.oncomplete = () => resolve();
     tx.onerror    = () => reject(tx.error);
-    tx.onabort    = () => reject(tx.error ?? new Error('transaction aborted'));
   }));
 }
 
@@ -839,39 +869,33 @@ async function migrateFromLS() {
 
 /* ================================================================
    ⑤  バックアップ / 復元
-   ================================================================ */
-
-/** iPhone / iPad を判定する */
+================================================================ */
 const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-/**
- * バックアップを実行する
- */
 async function handleBackup() {
   try {
     const records = await getAllRecords();
+    const maintenances = await getAllMaintenances();
 
-    if (records.length === 0) {
+    if (records.length === 0 && maintenances.length === 0) {
       toast('⚠ 記録がないためバックアップできません');
       return;
     }
 
-    /* バックアップ JSON を構築 */
     const now        = new Date();
     const backupData = {
-      app:        'FuelogDB',           /* アプリ識別子 */
-      version:    1,                    /* フォーマットバージョン */
-      exportedAt: now.toISOString(),    /* エクスポート日時 */
+      app:        'FuelogDB',
+      version:    2, /* メンテナンス対応でスキーマVerアップ */
+      exportedAt: now.toISOString(),
       count:      records.length,
-      records:    records
+      maintCount: maintenances.length,
+      records:    records,
+      maintenances: maintenances
     };
 
     const json     = JSON.stringify(backupData, null, 2); 
     const fileName = `fuelog_backup_${now.toISOString().slice(0,10)}.json`; 
 
-    /* iOS/Android/PC 全対応の標準的な Blob ダウンロード処理に統一
-      （iOS Safari も近年は Blob のダウンロード属性に対応しています）
-    */
     const blob    = new Blob([json], { type: 'application/json' });
     const url     = URL.createObjectURL(blob);
     const anchor  = document.createElement('a');
@@ -882,22 +906,17 @@ async function handleBackup() {
     anchor.click();
     document.body.removeChild(anchor);
 
-    /* メモリリーク防止のため少し待ってからオブジェクトURLを開放 */
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-    /* 最終バックアップ日時を保存して UI 更新 */
     localStorage.setItem('lastBackupAt', now.toISOString());
     updateBackupMeta();
-    toast(`💾 ${records.length} 件をバックアップしました`);
+    toast(`💾 バックアップが完了しました`);
 
   } catch (err) {
     alert('バックアップに失敗しました: ' + err.message);
   }
 }
 
-/**
- * 最終バックアップ日時を UI に表示する
- */
 function updateBackupMeta() {
   const raw = localStorage.getItem('lastBackupAt');
   const el  = document.getElementById('backupMeta');
@@ -906,7 +925,6 @@ function updateBackupMeta() {
     return;
   }
   const d = new Date(raw);
-  /* 'YYYY/MM/DD HH:MM' 形式で表示 */
   const str = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} `
             + `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   el.textContent = `最終バックアップ: ${str}`;
@@ -915,22 +933,14 @@ function updateBackupMeta() {
 /* ================================================================
    復元（インポート）処理
 ================================================================ */
-
-/** Step2 で読み込んだ JSON データを一時保持 */
 let _pendingRestoreData = null;
 
-/**
- * Step1: 復元ボタンを押したとき
- */
 function handleRestoreOpen() {
   const input = document.getElementById('fileInput');
   input.value = '';
   input.click();
 }
 
-/**
- * Step2: ファイルが選択されたとき
- */
 function handleFileSelect(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -968,15 +978,12 @@ function handleFileSelect(event) {
   reader.readAsText(file, 'UTF-8');
 }
 
-/**
- * バックアップ JSON のバリデーション
- */
 function validateBackupJson(data) {
   if (typeof data !== 'object' || data === null) {
     return 'JSONがオブジェクト形式ではありません';
   }
   if (data.app !== 'FuelogDB') {
-    return '燃費ログのバックアップファイルではありません（app フィールドが一致しません）';
+    return '燃費ログのバックアップファイルではありません';
   }
   if (typeof data.version !== 'number') {
     return 'version フィールドが見つかりません';
@@ -984,67 +991,45 @@ function validateBackupJson(data) {
   if (!Array.isArray(data.records)) {
     return 'records フィールドが配列ではありません';
   }
-
-  const sample = data.records.slice(0, 10);
-  for (const r of sample) {
-    if (typeof r.id    !== 'number') return `レコードに id (number) がありません`;
-    if (typeof r.date  !== 'string') return `レコードに date (string) がありません`;
-    if (typeof r.km    !== 'number') return `レコードに km (number) がありません`;
-    if (typeof r.liter !== 'number') return `レコードに liter (number) がありません`;
-    if (r.eff !== undefined && typeof r.eff !== 'string') return `レコードの eff が不正です`;
-  }
-
   return null; 
 }
 
-/**
- * 復元確認ダイアログを開く
- */
 function openRestoreDialog(data) {
-  const exportedAt = data.exportedAt
-    ? new Date(data.exportedAt).toLocaleString('ja-JP')
-    : '不明';
+  const exportedAt = data.exportedAt ? new Date(data.exportedAt).toLocaleString('ja-JP') : '不明';
+  const rLen = data.records ? data.records.length : 0;
+  const mLen = data.maintenances ? data.maintenances.length : 0;
 
   document.getElementById('dlgRestoreTarget').innerHTML =
-    `📁 <strong>${data.records.length} 件</strong> のレコード<br>` +
-    `🕐 バックアップ日時: <strong>${exportedAt}</strong><br>` +
-    `⚠ 現在の <strong>${'?'} 件</strong> のデータは上書きされます`;
-
-  getAllRecords().then(recs => {
-    document.getElementById('dlgRestoreTarget').innerHTML =
-      `📁 <strong>${data.records.length} 件</strong> のレコードを復元<br>` +
-      `🕐 バックアップ日時: <strong>${exportedAt}</strong><br>` +
-      `⚠ 現在の <strong>${recs.length} 件</strong> のデータは上書きされます`;
-  }).catch(() => {});
+    `📁 給油レコード: <strong>${rLen} 件</strong><br>` +
+    `🔧 メンテレコード: <strong>${mLen} 件</strong><br>` +
+    `🕐 日時: <strong>${exportedAt}</strong><br>` +
+    `⚠ 現在のデータはすべて上書きされます`;
 
   document.getElementById('overlayRestore').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 
-/** 復元ダイアログを閉じる */
 function closeRestoreDialog() {
   _pendingRestoreData = null;
   document.getElementById('overlayRestore').classList.remove('open');
   document.body.style.overflow = '';
 }
 
-/**
- * Step3: 復元実行
- */
 async function execRestore() {
   if (!_pendingRestoreData) return;
   const data = _pendingRestoreData;
   closeRestoreDialog();
 
   try {
-    const records = data.records.map(r => ({
+    const records = (data.records || []).map(r => ({
       ...r,
       eff: r.eff || fuelEff(r.km, r.liter)
     }));
+    const maintenances = data.maintenances || [];
 
-    await dbClearAndPut(records);
+    await dbClearAndPutAll(records, maintenances);
     await render();
-    toast(`📂 ${records.length} 件を復元しました`, 'warn');
+    toast(`📂 データを復元しました`, 'warn');
   } catch (err) {
     alert('復元に失敗しました: ' + err.message);
   }
@@ -1112,26 +1097,22 @@ function initNetworkWatch() {
 /* ================================================================
    ⑧  ユーティリティ
 ================================================================ */
-
-/** 燃費計算（km/L）*/
 function fuelEff(km, liter) {
   if (!km || !liter || liter <= 0) return '--';
   return (km / liter).toFixed(1);
 }
 
-/** 'YYYY-MM-DD' → 'YYYY年M月D日' */
 function fmtDate(s) {
+  if(!s) return '不明';
   const [y, m, d] = s.split('-');
   return `${y}年${+m}月${+d}日`;
 }
 
-/** 'YYYY-MM-DD' → 'M/D'（グラフ軸ラベル用） */
 function shortDate(s) {
   const [, m, d] = s.split('-');
   return `${+m}/${+d}`;
 }
 
-/** トースト通知 */
 let _toastTimer;
 function toast(msg, type = '') {
   const el = document.getElementById('toast');
@@ -1156,15 +1137,13 @@ function drawGraph(records) {
   }
   emptyEl.style.display = 'none';
 
-  const pts  = records.slice().reverse();       /* 古い順 */
+  const pts  = records.slice().reverse();
   const effs = pts.map(r => parseFloat(r.eff));
 
-  /* Y 軸レンジ */
   const eMin = Math.min(...effs), eMax = Math.max(...effs);
   const pad  = (eMax - eMin) * 0.3 || 2;
   const yMin = Math.max(0, eMin - pad), yMax = eMax + pad;
 
-  /* レイアウト定数 */
   const PL = 46, PR = 18, PT = 26, PB = 36, GAP = 64, H = 180;
   const cw   = scroll.clientWidth || 300;
   const svgW = Math.max(cw, pts.length * GAP + PL + PR);
@@ -1229,10 +1208,11 @@ function drawGraph(records) {
 }
 
 /* ================================================================
-   ⑩  UI 全体再描画
+   ⑩  UI 全体再描画 (給油とメンテナンス両方に対応)
 ================================================================ */
 async function render() {
   const recs = await getAllRecords();
+  const maints = await getAllMaintenances();
 
   /* サマリー */
   let totKm = 0, totL = 0;
@@ -1242,46 +1222,62 @@ async function render() {
   document.getElementById('statKm').textContent    = totKm.toLocaleString();
   document.getElementById('statLiter').textContent = totL.toFixed(1);
   document.getElementById('badgeCount').textContent = `${recs.length} 件`;
+  document.getElementById('badgeMaintCount').textContent = `${maints.length} 件`;
 
   /* グラフ */
   drawGraph(recs);
 
-  /* 履歴リスト */
+  /* 給油履歴リスト */
   const list = document.getElementById('recList');
   if (recs.length === 0) {
-    list.innerHTML = `
-      <div class="empty">
-        <span class="empty-icon">📋</span>
-        まだ記録がありません<br>給油したら上のフォームから登録してみましょう
-      </div>`;
-    return;
+    list.innerHTML = `<div class="empty"><span class="empty-icon">📋</span>まだ記録がありません</div>`;
+  } else {
+    list.innerHTML = `<div class="rec-list">
+      ${recs.map(r => `
+        <div class="rec-item" data-id="${r.id}">
+          <div class="rec-badge">
+            <span class="val">${r.eff}</span>
+            <span class="unit">km/L</span>
+          </div>
+          <div class="rec-info">
+            <div class="rec-date">📅 ${fmtDate(r.date)}</div>
+            <div class="rec-nums">
+              <span class="rec-num">${r.km.toLocaleString()}<span> km</span></span>
+              <span class="rec-num">${r.liter.toFixed(2)}<span> L</span></span>
+            </div>
+          </div>
+          <button class="btn-del" onclick="openDeleteDialog(${r.id}, 'fuel')" title="削除">✕</button>
+        </div>`).join('')}
+    </div>`;
   }
 
-  list.innerHTML = `<div class="rec-list">
-    ${recs.map(r => `
-      <div class="rec-item" data-id="${r.id}">
-        <div class="rec-badge">
-          <span class="val">${r.eff}</span>
-          <span class="unit">km/L</span>
-        </div>
-        <div class="rec-info">
-          <div class="rec-date">📅 ${fmtDate(r.date)}</div>
-          <div class="rec-nums">
-            <span class="rec-num">${r.km.toLocaleString()}<span> km</span></span>
-            <span class="rec-num">${r.liter.toFixed(2)}<span> L</span></span>
+  /* メンテナンス履歴リスト */
+  const mList = document.getElementById('maintList');
+  if (maints.length === 0) {
+    mList.innerHTML = `<div class="empty"><span class="empty-icon">🔧</span>メンテ記録はまだありません</div>`;
+  } else {
+    mList.innerHTML = `<div class="rec-list">
+      ${maints.map(m => `
+        <div class="rec-item" data-id="${m.id}">
+          <div class="rec-badge maint">
+            <span class="val">🛠</span>
           </div>
-        </div>
-        <button class="btn-del" onclick="openDeleteDialog(${r.id})"
-          aria-label="削除確認" title="この記録を削除">✕</button>
-      </div>`).join('')}
-  </div>`;
+          <div class="rec-info">
+            <div class="rec-date">📅 ${fmtDate(m.date)}</div>
+            <div class="rec-nums">
+              <span class="rec-num">${m.km ? m.km.toLocaleString() : '--'}<span> km</span></span>
+            </div>
+            <div class="rec-memo">${m.memo || '内容なし'}</div>
+          </div>
+          <button class="btn-del" onclick="openDeleteDialog(${m.id}, 'maint')" title="削除">✕</button>
+        </div>`).join('')}
+    </div>`;
+  }
 }
 
 /* ================================================================
-   ⑪  入力フォーム
+   ⑪  入力フォーム制御 (給油 & メンテナンス)
 ================================================================ */
-
-/** 燃費リアルタイムプレビュー */
 function updatePreview() {
   const km  = parseFloat(document.getElementById('fKm').value);
   const lt  = parseFloat(document.getElementById('fLiter').value);
@@ -1289,7 +1285,6 @@ function updatePreview() {
   document.getElementById('previewVal').textContent = eff === '--' ? '-- km/L' : `${eff} km/L`;
 }
 
-/** 記録を追加する */
 async function handleAdd() {
   const date  = document.getElementById('fDate').value;
   const km    = parseFloat(document.getElementById('fKm').value);
@@ -1313,24 +1308,57 @@ async function handleAdd() {
   }
 }
 
-/* ================================================================
-   ⑫  削除確認ダイアログ
-================================================================ */
-let _pendingDeleteId = null;
+/* メンテナンスの保存 */
+async function handleMaintAdd() {
+  const date = document.getElementById('mDate').value;
+  const km   = parseFloat(document.getElementById('mKm').value);
+  const memo = document.getElementById('mMemo').value;
 
-async function openDeleteDialog(id) {
-  _pendingDeleteId = id;
+  if (!date) { alert('実施日を入力してください'); return; }
+  if (!memo) { alert('メンテナンス内容（メモ）を入力してください'); return; }
+
+  const rec = { id: Date.now(), date, km: km || 0, memo };
 
   try {
-    const recs   = await getAllRecords();
-    const target = recs.find(r => r.id === id);
-    if (target) {
-      document.getElementById('dlgDelTarget').innerHTML =
-        `📅 <strong>${fmtDate(target.date)}</strong><br>` +
-        `🛣 ${target.km.toLocaleString()} km ／ 🪣 ${target.liter.toFixed(2)} L<br>` +
-        `⚡ 燃費 ${target.eff} km/L`;
+    await dbMaintAdd(rec);
+    document.getElementById('mKm').value   = '';
+    document.getElementById('mMemo').value = '';
+    await render();
+    toast('✓ メンテナンスを記録しました');
+  } catch (err) {
+    alert('保存に失敗しました: ' + err.message);
+  }
+}
+
+/* ================================================================
+   ⑫  削除確認ダイアログ (両ストア対応)
+================================================================ */
+let _pendingDeleteId = null;
+let _pendingDeleteType = null; /* 'fuel' または 'maint' */
+
+async function openDeleteDialog(id, type) {
+  _pendingDeleteId = id;
+  _pendingDeleteType = type;
+
+  try {
+    if (type === 'fuel') {
+      const recs = await getAllRecords();
+      const target = recs.find(r => r.id === id);
+      if (target) {
+        document.getElementById('dlgDelTarget').innerHTML =
+          `📅 <strong>${fmtDate(target.date)} (給油)</strong><br>` +
+          `🛣 ${target.km.toLocaleString()} km ／ 🪣 ${target.liter.toFixed(2)} L`;
+      }
+    } else {
+      const maints = await getAllMaintenances();
+      const target = maints.find(m => m.id === id);
+      if (target) {
+        document.getElementById('dlgDelTarget').innerHTML =
+          `📅 <strong>${fmtDate(target.date)} (メンテ)</strong><br>` +
+          `📝 ${target.memo}`;
+      }
     }
-  } catch { /* 失敗してもダイアログは開く */ }
+  } catch { }
 
   document.getElementById('overlayDelete').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -1338,19 +1366,25 @@ async function openDeleteDialog(id) {
 
 function closeDeleteDialog() {
   _pendingDeleteId = null;
+  _pendingDeleteType = null;
   document.getElementById('overlayDelete').classList.remove('open');
   document.body.style.overflow = '';
 }
 
 async function execDelete() {
-  if (_pendingDeleteId === null) return;
+  if (_pendingDeleteId === null || _pendingDeleteType === null) return;
   const id = _pendingDeleteId;
+  const type = _pendingDeleteType;
   closeDeleteDialog();
 
-  const el       = document.querySelector(`[data-id="${id}"]`);
+  const el = document.querySelector(`[data-id="${id}"]`);
   const doDelete = async () => {
     try {
-      await dbDelete(id);
+      if (type === 'fuel') {
+        await dbDelete(id);
+      } else {
+        await dbMaintDelete(id);
+      }
       await render();
       toast('🗑 削除しました');
     } catch (err) {
@@ -1366,7 +1400,6 @@ async function execDelete() {
   }
 }
 
-/* オーバーレイ外タップでキャンセル */
 document.getElementById('overlayDelete').addEventListener('click', function(e) {
   if (e.target === this) closeDeleteDialog();
 });
@@ -1376,7 +1409,7 @@ document.getElementById('overlayRestore').addEventListener('click', function(e) 
 });
 
 /* ================================================================
-   ⑬  リサイズ時グラフ再描画（デバウンス）
+   ⑬  リサイズ時グラフ再描画
 ================================================================ */
 let _resizeTimer;
 window.addEventListener('resize', () => {
@@ -1391,17 +1424,14 @@ async function initApp() {
   const splashMsg = document.getElementById('splashMsg');
 
   try {
-    /* --- PWA 系 --- */
     injectManifest();
     registerSW();
     initInstallBanner();
     initNetworkWatch();
 
-    /* --- IndexedDB を開く --- */
     splashMsg.textContent = 'データベースを開いています...';
     await openDB();
 
-    /* --- localStorage からデータ移行 --- */
     splashMsg.textContent = '既存データを確認中...';
     const migCount = await migrateFromLS();
     if (migCount > 0) {
@@ -1411,28 +1441,30 @@ async function initApp() {
       setTimeout(() => b.classList.remove('visible'), 6000);
     }
 
-    /* --- フォーム初期化 --- */
-    document.getElementById('fDate').value = new Date().toISOString().slice(0, 10);
+    /* フォーム日付初期化 */
+    const todayStr = new Date().toISOString().slice(0, 10);
+    document.getElementById('fDate').value = todayStr;
+    document.getElementById('mDate').value = todayStr;
+
+    /* イベントリスナー */
     document.getElementById('fKm').addEventListener('input',    updatePreview);
     document.getElementById('fLiter').addEventListener('input', updatePreview);
     document.getElementById('btnAdd').addEventListener('click', handleAdd);
+    document.getElementById('btnMaintAdd').addEventListener('click', handleMaintAdd);
+    
     document.getElementById('btnAdd').disabled    = false;
     document.getElementById('btnAdd').textContent = '＋ 記録する';
 
-    /* --- バックアップ / 復元 UI 初期化 --- */
     document.getElementById('btnBackup').addEventListener('click', handleBackup);
     document.getElementById('btnRestoreOpen').addEventListener('click', handleRestoreOpen);
     document.getElementById('fileInput').addEventListener('change', handleFileSelect);
 
-    /* iPhone ヒント表示 */
     if (IS_IOS) {
       document.getElementById('iosHint').classList.add('visible');
     }
 
-    /* 最終バックアップ日時を表示 */
     updateBackupMeta();
 
-    /* --- 初期描画 --- */
     splashMsg.textContent = 'データを読み込み中...';
     await render();
 
@@ -1443,13 +1475,11 @@ async function initApp() {
     eb.classList.add('visible');
   }
 
-  /* スプラッシュをフェードアウト */
   const splash = document.getElementById('splash');
   splash.classList.add('fade');
   setTimeout(() => splash.remove(), 400);
 }
 
-/* 起動 */
 initApp();
 </script>
 </body>
