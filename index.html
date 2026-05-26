@@ -5,14 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>燃費ログ</title>
 
-  <!-- PWA メタタグ（iOS Safari 向け） -->
   <meta name="apple-mobile-web-app-capable"          content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title"            content="燃費ログ" />
   <meta name="theme-color"                           content="#0d0f14" />
   <meta name="description"                           content="給油記録・燃費管理アプリ" />
 
-  <!-- Google Fonts（オフライン時は system-font にフォールバック） -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
 
@@ -493,29 +491,24 @@
 </head>
 <body>
 
-<!-- スプラッシュ画面 -->
 <div id="splash">
   <span class="splash-icon">⛽</span>
   <div class="spinner"></div>
   <div id="splashMsg">起動中...</div>
 </div>
 
-<!-- メインアプリ -->
 <div class="app">
 
-  <!-- 移行完了バナー -->
   <div class="banner banner-migration" id="bannerMigration">
     <strong>✅ データを移行しました</strong>
     既存の給油記録を IndexedDB へ安全に移行しました。
   </div>
 
-  <!-- エラーバナー -->
   <div class="banner banner-error" id="bannerError">
     <strong>⚠ データベースエラー</strong>
     <span id="bannerErrorMsg"></span>
   </div>
 
-  <!-- PWA インストールバナー -->
   <div class="banner-pwa banner" id="bannerPwa">
     <div class="banner-pwa-text">
       <strong>📲 アプリとして追加</strong>
@@ -525,20 +518,17 @@
     <button class="btn-dismiss-pwa" id="btnDismissPwa" aria-label="閉じる">×</button>
   </div>
 
-  <!-- ネットワーク状態バー -->
   <div id="networkBar">
     <div class="net-dot" id="netDot"></div>
     <span id="netMsg"></span>
   </div>
 
-  <!-- ヘッダー -->
   <header>
     <span class="logo">⛽</span>
     <h1>燃費<em>ログ</em></h1>
     <p>FUEL EFFICIENCY TRACKER</p>
   </header>
 
-  <!-- 平均燃費サマリー -->
   <div class="avg-card">
     <div>
       <div class="avg-label">平均燃費</div>
@@ -552,7 +542,6 @@
     </div>
   </div>
 
-  <!-- 燃費推移グラフ -->
   <div class="graph-card">
     <div class="sec-title">燃費推移グラフ</div>
     <div class="graph-scroll" id="graphScroll">
@@ -560,7 +549,6 @@
     </div>
   </div>
 
-  <!-- 入力フォーム -->
   <div class="form-card">
     <div class="sec-title">給油を記録</div>
     <div class="form-grid">
@@ -584,65 +572,33 @@
     <button class="btn-add" id="btnAdd" disabled>準備中...</button>
   </div>
 
-  <!-- ================================================================
-       バックアップ / 復元カード
-       ================================================================
-       【エクスポート】
-         IndexedDB の全レコードを JSON 化し、
-         <a download> でダウンロードさせる。
-         iPhone Safari は <a download> を無視するため、
-         代わりに window.open() でテキストを新タブで開き、
-         「ファイルに保存」を案内するヒントを表示する。
-
-       【インポート（復元）】
-         非表示の <input type="file"> に click() してファイルを選ばせ、
-         FileReader で JSON を読み込む。
-         バリデーション後に確認ダイアログを表示してから上書き。
-         iPhone でも <input type="file"> は動作する。
-  ================================================================ -->
   <div class="backup-card">
     <div class="sec-title">バックアップ / 復元</div>
 
     <div class="backup-btns">
-      <!-- バックアップボタン -->
       <button class="btn-backup" id="btnBackup">
         <span class="btn-icon">💾</span>
         <span>バックアップ</span>
       </button>
 
-      <!-- 復元ボタン -->
       <button class="btn-restore" id="btnRestoreOpen">
         <span class="btn-icon">📂</span>
         <span>復元</span>
       </button>
     </div>
 
-    <!--
-      iPhone 用ヒント:
-      iOS は <a download> でファイルを保存できないため、
-      JSON テキストを新タブで開いた後の操作方法を説明する。
-      JS で iOS 判定して .visible を付与する。
-    -->
     <div class="ios-hint" id="iosHint">
       <strong>📱 iPhone でのバックアップ保存方法</strong><br>
-      「バックアップ」を押すと JSON が新しいタブで開きます。<br>
-      画面を長押し →「共有」→「ファイルに保存」で端末に保存できます。
+      「バックアップ」を押すとファイル保存の選択肢、またはプレビューが表示されます。<br>
+      保存されない場合は、画面下の共有ボタン（□に↑）から「ファイルに保存」を選択してください。
     </div>
 
-    <!-- 最終バックアップ日時（localStorage に記録） -->
     <div class="backup-meta" id="backupMeta">最終バックアップ: なし</div>
 
-    <!--
-      ファイル選択 input（非表示）
-      accept=".json" で JSON ファイルだけを選べるようにする。
-      iPhone Safari も .json フィルタに対応している。
-      復元ボタンの click() でこの input を開く。
-    -->
     <input type="file" id="fileInput" accept=".json,application/json"
            style="display:none" aria-hidden="true" />
   </div>
 
-  <!-- 履歴 -->
   <div class="history-section">
     <div class="history-hd">
       <h2>給油履歴</h2>
@@ -654,12 +610,7 @@
     <div id="recList"></div>
   </div>
 
-</div><!-- /.app -->
-
-<!-- ================================================================
-     削除確認ダイアログ
-================================================================ -->
-<div class="overlay" id="overlayDelete">
+</div><div class="overlay" id="overlayDelete">
   <div class="dlg-delete" role="dialog" aria-modal="true" aria-labelledby="dlgDelTitle">
     <span class="dlg-icon">🗑️</span>
     <div class="dlg-title" id="dlgDelTitle">この記録を削除しますか？</div>
@@ -672,28 +623,19 @@
   </div>
 </div>
 
-<!-- ================================================================
-     復元確認ダイアログ
-     ================================================================
-     復元は全データを上書きする破壊的操作なので、
-     件数・バックアップ日時などの詳細情報を表示して
-     ユーザーに意図的な選択をさせる。
-================================================================ -->
 <div class="overlay" id="overlayRestore">
   <div class="dlg-restore" role="dialog" aria-modal="true" aria-labelledby="dlgRestoreTitle">
     <span class="dlg-icon">⚠️</span>
     <div class="dlg-title" id="dlgRestoreTitle">データを復元しますか？</div>
     <p class="dlg-sub">現在のデータはすべて上書きされます。<br>この操作は取り消せません。</p>
-    <!-- 復元対象ファイルの情報（JS で書き込む） -->
     <div class="dlg-target" id="dlgRestoreTarget">…</div>
     <div class="dlg-btns">
-      <button class="btn-cancel"      onclick="closeRestoreDialog()">キャンセル</button>
+      <button class="btn-cancel"       onclick="closeRestoreDialog()">キャンセル</button>
       <button class="btn-restore-exec" onclick="execRestore()">復元する</button>
     </div>
   </div>
 </div>
 
-<!-- トースト -->
 <div id="toast"></div>
 
 
@@ -897,38 +839,13 @@ async function migrateFromLS() {
 
 /* ================================================================
    ⑤  バックアップ / 復元
-   ================================================================
-
-   【バックアップ形式（JSON スキーマ）】
-   {
-     "app": "FuelogDB",          // アプリ識別子（復元時にバリデーション）
-     "version": 1,               // バックアップフォーマットバージョン
-     "exportedAt": "2024-01-15T10:30:00.000Z",  // エクスポート日時（ISO 8601）
-     "count": 12,                // レコード件数
-     "records": [ { id, date, km, liter, eff }, ... ]
-   }
-
-   【iPhone 対応】
-   - iOS Safari は <a download> 属性を無視してリンク先をナビゲートする。
-     そのため、data: URL を window.open() で新タブに開き、
-     ユーザーが手動で「ファイルに保存」できるよう案内文を表示する。
-   - iOS 判定: navigator.userAgent に 'iPhone' または 'iPad' が含まれるかで判断。
-   - 復元（インポート）は <input type="file"> を使うため、
-     iPhone でも問題なく動作する。
-================================================================ */
+   ================================================================ */
 
 /** iPhone / iPad を判定する */
 const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
 
 /**
  * バックアップを実行する
- *
- * 処理の流れ:
- *   1. IndexedDB から全レコードを取得
- *   2. メタ情報を付けて JSON 化
- *   3. iOS なら data: URL を新タブで開く
- *      非 iOS は <a download> でファイル保存
- *   4. 最終バックアップ日時を localStorage に記録
  */
 async function handleBackup() {
   try {
@@ -949,49 +866,24 @@ async function handleBackup() {
       records:    records
     };
 
-    const json     = JSON.stringify(backupData, null, 2); /* 2 スペースインデントで読みやすく */
-    const fileName = `fuelog_backup_${now.toISOString().slice(0,10)}.json`; /* 例: fuelog_backup_2024-01-15.json */
+    const json     = JSON.stringify(backupData, null, 2); 
+    const fileName = `fuelog_backup_${now.toISOString().slice(0,10)}.json`; 
 
-    if (IS_IOS) {
-      /*
-        iPhone / iPad:
-        <a download> は機能しないため、data: URI の JSON を
-        新タブで開く。ユーザーは iOS の共有メニューから
-        「ファイルに保存」でローカルに保存できる。
-      */
-      const dataUrl = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
-      const win = window.open(dataUrl, '_blank');
-      if (!win) {
-        /*
-          ポップアップブロックされた場合は clipboard にコピーして案内
-          （PWA モードではポップアップが制限されることがある）
-        */
-        try {
-          await navigator.clipboard.writeText(json);
-          toast('📋 JSON をクリップボードにコピーしました');
-        } catch {
-          alert('バックアップ JSON:\n\n' + json.slice(0, 500) + '\n...(長いため省略)');
-        }
-        return;
-      }
-    } else {
-      /*
-        Android / PC:
-        Blob URL を <a download> で開いてファイルとして保存する。
-        Blob URL は使用後すぐに revoke して メモリリークを防ぐ。
-      */
-      const blob    = new Blob([json], { type: 'application/json' });
-      const url     = URL.createObjectURL(blob);
-      const anchor  = document.createElement('a');
-      anchor.href     = url;
-      anchor.download = fileName;
-      anchor.style.display = 'none';
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
-      /* 少し待ってから revoke（すぐに消すとブラウザがダウンロードをキャンセルすることがある） */
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
+    /* iOS/Android/PC 全対応の標準的な Blob ダウンロード処理に統一
+      （iOS Safari も近年は Blob のダウンロード属性に対応しています）
+    */
+    const blob    = new Blob([json], { type: 'application/json' });
+    const url     = URL.createObjectURL(blob);
+    const anchor  = document.createElement('a');
+    anchor.href   = url;
+    anchor.download = fileName;
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+
+    /* メモリリーク防止のため少し待ってからオブジェクトURLを開放 */
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 
     /* 最終バックアップ日時を保存して UI 更新 */
     localStorage.setItem('lastBackupAt', now.toISOString());
@@ -1022,12 +914,6 @@ function updateBackupMeta() {
 
 /* ================================================================
    復元（インポート）処理
-   ================================================================
-   インポートは 3 ステップで行う:
-     Step1: btnRestoreOpen → fileInput.click() → ファイルピッカーを開く
-     Step2: fileInput change → JSON を読み込んでバリデーション
-                             → 確認ダイアログを表示
-     Step3: execRestore()  → DB をクリアして新データを書き込む
 ================================================================ */
 
 /** Step2 で読み込んだ JSON データを一時保持 */
@@ -1035,11 +921,8 @@ let _pendingRestoreData = null;
 
 /**
  * Step1: 復元ボタンを押したとき
- * 非表示の <input type="file"> を click() してファイルピッカーを開く。
- * iPhone でも <input type="file"> は動作する。
  */
 function handleRestoreOpen() {
-  /* 同じファイルを再選択できるよう value をリセット */
   const input = document.getElementById('fileInput');
   input.value = '';
   input.click();
@@ -1047,13 +930,11 @@ function handleRestoreOpen() {
 
 /**
  * Step2: ファイルが選択されたとき
- * FileReader で JSON テキストを読み込み、バリデーション後に確認ダイアログを開く。
  */
 function handleFileSelect(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  /* ファイルサイズ上限: 10MB（異常に大きなファイルを弾く） */
   if (file.size > 10 * 1024 * 1024) {
     alert('ファイルサイズが大きすぎます（10MB 以下にしてください）');
     return;
@@ -1063,8 +944,6 @@ function handleFileSelect(event) {
 
   reader.onload = ev => {
     let parsed;
-
-    /* JSON パース */
     try {
       parsed = JSON.parse(ev.target.result);
     } catch {
@@ -1072,19 +951,12 @@ function handleFileSelect(event) {
       return;
     }
 
-    /* ================================================================
-       バリデーション
-       ================================================================
-       バックアップファイルが正しい形式かを検証する。
-       不正なファイルで DB が破壊されるのを防ぐ。
-    ================================================================ */
     const err = validateBackupJson(parsed);
     if (err) {
       alert('バックアップファイルが不正です:\n' + err);
       return;
     }
 
-    /* バリデーション通過 → 一時保存して確認ダイアログを表示 */
     _pendingRestoreData = parsed;
     openRestoreDialog(parsed);
   };
@@ -1093,21 +965,11 @@ function handleFileSelect(event) {
     alert('ファイルの読み込みに失敗しました。');
   };
 
-  /* テキストとして読み込む（JSON は UTF-8 テキスト） */
   reader.readAsText(file, 'UTF-8');
 }
 
 /**
  * バックアップ JSON のバリデーション
- *
- * チェック内容:
- *   - app フィールドが 'FuelogDB' であること
- *   - version フィールドが存在すること
- *   - records が配列であること
- *   - 各レコードに必須フィールドがあること
- *
- * @param {any} data - パース済み JSON
- * @returns {string|null} エラーメッセージ（問題なければ null）
  */
 function validateBackupJson(data) {
   if (typeof data !== 'object' || data === null) {
@@ -1123,26 +985,22 @@ function validateBackupJson(data) {
     return 'records フィールドが配列ではありません';
   }
 
-  /* 各レコードの必須フィールドチェック（最初の 10 件だけサンプル検証） */
   const sample = data.records.slice(0, 10);
   for (const r of sample) {
     if (typeof r.id    !== 'number') return `レコードに id (number) がありません`;
     if (typeof r.date  !== 'string') return `レコードに date (string) がありません`;
     if (typeof r.km    !== 'number') return `レコードに km (number) がありません`;
     if (typeof r.liter !== 'number') return `レコードに liter (number) がありません`;
-    /* eff は文字列または '--' */
     if (r.eff !== undefined && typeof r.eff !== 'string') return `レコードの eff が不正です`;
   }
 
-  return null; /* 検証通過 */
+  return null; 
 }
 
 /**
- * Step2 の最後: 復元確認ダイアログを開く
- * @param {Object} data - バリデーション済みバックアップ JSON
+ * 復元確認ダイアログを開く
  */
 function openRestoreDialog(data) {
-  /* ダイアログに詳細情報を表示 */
   const exportedAt = data.exportedAt
     ? new Date(data.exportedAt).toLocaleString('ja-JP')
     : '不明';
@@ -1152,7 +1010,6 @@ function openRestoreDialog(data) {
     `🕐 バックアップ日時: <strong>${exportedAt}</strong><br>` +
     `⚠ 現在の <strong>${'?'} 件</strong> のデータは上書きされます`;
 
-  /* 現在の件数を非同期で更新 */
   getAllRecords().then(recs => {
     document.getElementById('dlgRestoreTarget').innerHTML =
       `📁 <strong>${data.records.length} 件</strong> のレコードを復元<br>` +
@@ -1173,7 +1030,6 @@ function closeRestoreDialog() {
 
 /**
  * Step3: 復元実行
- * DB を全クリアして新データを書き込み、画面を再描画する
  */
 async function execRestore() {
   if (!_pendingRestoreData) return;
@@ -1181,21 +1037,13 @@ async function execRestore() {
   closeRestoreDialog();
 
   try {
-    /*
-      eff フィールドが欠けているレコードは再計算して補完する
-      （古いバージョンのバックアップとの互換性確保）
-    */
     const records = data.records.map(r => ({
       ...r,
       eff: r.eff || fuelEff(r.km, r.liter)
     }));
 
-    /* 既存データを全削除 → 新データを一括書き込み（1 トランザクション） */
     await dbClearAndPut(records);
-
-    /* 画面を再描画 */
     await render();
-
     toast(`📂 ${records.length} 件を復元しました`, 'warn');
   } catch (err) {
     alert('復元に失敗しました: ' + err.message);
@@ -1283,10 +1131,7 @@ function shortDate(s) {
   return `${+m}/${+d}`;
 }
 
-/** トースト通知
- * @param {string} msg  - 表示テキスト
- * @param {string} type - '' (緑) | 'warn' (オレンジ)
- */
+/** トースト通知 */
 let _toastTimer;
 function toast(msg, type = '') {
   const el = document.getElementById('toast');
@@ -1521,12 +1366,11 @@ async function execDelete() {
   }
 }
 
-/* オーバーレイ外タップでキャンセル（削除） */
+/* オーバーレイ外タップでキャンセル */
 document.getElementById('overlayDelete').addEventListener('click', function(e) {
   if (e.target === this) closeDeleteDialog();
 });
 
-/* オーバーレイ外タップでキャンセル（復元） */
 document.getElementById('overlayRestore').addEventListener('click', function(e) {
   if (e.target === this) closeRestoreDialog();
 });
