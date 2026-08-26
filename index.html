@@ -223,7 +223,7 @@
       font-family: var(--mono); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px;
     }
     .field input {
-      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      width: 100%; background: #252e42; border: 1px solid #485675;
       border-radius: var(--radius-sm); color: var(--text);
       font-size: 15px; font-family: var(--font); padding: 10px 11px;
       outline: none; transition: border-color 0.2s, box-shadow 0.2s;
@@ -529,11 +529,11 @@
     <div class="form-grid">
       <div class="field">
         <label for="fKm">🛣 走行距離 (km)</label>
-        <input type="number" id="fKm" placeholder="例: 450" min="0" step="0.1" inputmode="decimal" />
+        <input type="number" id="fKm"  min="0" step="0.1" inputmode="decimal" />
       </div>
       <div class="field">
         <label for="fLiter">🪣 給油量 (L)</label>
-        <input type="number" id="fLiter" placeholder="例: 40.0" min="0.1" step="0.01" inputmode="decimal" />
+        <input type="number" id="fLiter"  min="0.1" step="0.01" inputmode="decimal" />
       </div>
             <div class="field full">
         <label for="fDate">📅 给油日</label>
@@ -576,11 +576,11 @@
       </div>
       <div class="field">
         <label for="mKm">🛣 走行距離 (km)</label>
-        <input type="number" id="mKm" placeholder="例: 45000" min="0" step="0.1" inputmode="decimal" />
+        <input type="number" id="mKm" min="0" step="0.1" inputmode="decimal" />
       </div>
       <div class="field">
         <label for="mMemo">📝 メモ・内容</label>
-        <input type="text" id="mMemo" placeholder="例: オイル交換、エレメント" />
+        <input type="text" id="mMemo"  />
       </div>
     </div>
     <button class="btn-add" id="btnMaintAdd" style="background: var(--warn); color: #1a0f00;">＋ メンテナンスを記録する</button>
