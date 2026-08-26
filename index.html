@@ -524,6 +524,29 @@
     <p>FUEL EFFICIENCY TRACKER</p>
   </header>
 
+  <div class="form-card">
+    <div class="sec-title">給油を記録</div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="fKm">🛣 走行距離 (km)</label>
+        <input type="number" id="fKm" placeholder="例: 450" min="0" step="0.1" inputmode="decimal" />
+      </div>
+      <div class="field">
+        <label for="fLiter">🪣 給油量 (L)</label>
+        <input type="number" id="fLiter" placeholder="例: 40.0" min="0.1" step="0.01" inputmode="decimal" />
+      </div>
+            <div class="field full">
+        <label for="fDate">📅 给油日</label>
+        <input type="date" id="fDate" />
+      </div>
+    </div>
+    <div class="preview">
+      <span>このときの燃費</span>
+      <span id="previewVal">-- km/L</span>
+    </div>
+    <button class="btn-add" id="btnAdd" disabled>準備中...</button>
+  </div>
+
   <div class="avg-card">
     <div>
       <div class="avg-label">平均燃費</div>
@@ -542,29 +565,6 @@
     <div class="graph-scroll" id="graphScroll">
       <div class="graph-empty" id="graphEmpty">📊 記録が 2 件以上あるとグラフが表示されます</div>
     </div>
-  </div>
-
-  <div class="form-card">
-    <div class="sec-title">給油を記録</div>
-    <div class="form-grid">
-      <div class="field full">
-        <label for="fDate">📅 给油日</label>
-        <input type="date" id="fDate" />
-      </div>
-      <div class="field">
-        <label for="fKm">🛣 走行距離 (km)</label>
-        <input type="number" id="fKm" placeholder="例: 450" min="0" step="0.1" inputmode="decimal" />
-      </div>
-      <div class="field">
-        <label for="fLiter">🪣 給油量 (L)</label>
-        <input type="number" id="fLiter" placeholder="例: 40.0" min="0.1" step="0.01" inputmode="decimal" />
-      </div>
-    </div>
-    <div class="preview">
-      <span>このときの燃費</span>
-      <span id="previewVal">-- km/L</span>
-    </div>
-    <button class="btn-add" id="btnAdd" disabled>準備中...</button>
   </div>
 
   <div class="form-card" style="border-color: var(--warn-dim);">
@@ -894,7 +894,7 @@ async function handleBackup() {
     };
 
     const json     = JSON.stringify(backupData, null, 2); 
-    const fileName = `fuelog_backup_${now.toISOString().slice(0,10)}.json`; 
+    const fileName = 'fuellog_backup.json';
 
     const blob    = new Blob([json], { type: 'application/json' });
     const url     = URL.createObjectURL(blob);
