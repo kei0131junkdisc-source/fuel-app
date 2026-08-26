@@ -481,7 +481,27 @@
     #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
     /* 警告色トースト（復元完了など） */
+
     #toast.warn { background: var(--warn); color: #1a0f00; }
+    /* 「もっと見る / 閉じる」ボタン */
+    .btn-more {
+      width: 100%;
+      margin-top: 10px;
+      background: var(--surface2);
+      color: var(--text-sub);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      font-size: 13px;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-more:active {
+      background: var(--border);
+      color: var(--text);
+    }
   </style>
 </head>
 <body>
@@ -1210,6 +1230,14 @@ function drawGraph(records) {
 /* ================================================================
    ⑩  UI 全体再描画 (給油とメンテナンス両方に対応)
 ================================================================ */
+/* 給油履歴の「もっと見る」表示制御用 */
+let _showAllRecs = false;
+
+function toggleShowAllRecs() {
+  _showAllRecs = !_showAllRecs;
+  render();
+}
+
 async function render() {
   const recs = await getAllRecords();
   const maints = await getAllMaintenances();
@@ -1227,13 +1255,16 @@ async function render() {
   /* グラフ */
   drawGraph(recs);
 
-  /* 給油履歴リスト */
+/* 給油履歴リスト */
   const list = document.getElementById('recList');
   if (recs.length === 0) {
     list.innerHTML = `<div class="empty"><span class="empty-icon">📋</span>まだ記録がありません</div>`;
   } else {
+    const displayRecs = _showAllRecs ? recs : recs.slice(0, 10);
+    const hasMore = recs.length > 10;
+
     list.innerHTML = `<div class="rec-list">
-      ${recs.map(r => `
+      ${displayRecs.map(r => `
         <div class="rec-item" data-id="${r.id}">
           <div class="rec-badge">
             <span class="val">${r.eff}</span>
@@ -1248,9 +1279,14 @@ async function render() {
           </div>
           <button class="btn-del" onclick="openDeleteDialog(${r.id}, 'fuel')" title="削除">✕</button>
         </div>`).join('')}
-    </div>`;
+    </div>
+    ${hasMore ? `
+      <button class="btn-more" onclick="toggleShowAllRecs()">
+        ${_showAllRecs ? '▲ 閉じる' : `▼ もっと見る (残り ${recs.length - 10} 件)`}
+      </button>
+    ` : ''}`;
   }
-
+  
   /* メンテナンス履歴リスト */
   const mList = document.getElementById('maintList');
   if (maints.length === 0) {
